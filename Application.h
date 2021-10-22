@@ -39,11 +39,8 @@ private:
 	ID3D11InputLayout*      _pVertexLayout;
 	ID3D11Buffer*           _pVertexBuffer;
 	ID3D11Buffer*           _pIndexBuffer;
-	ID3D11Buffer*           _pPyramidVertexBuffer;
-	ID3D11Buffer*           _pPyramidIndexBuffer;
 	ID3D11Buffer*           _pConstantBuffer;
 	XMFLOAT4X4              _world;
-	XMFLOAT4X4              _planet1World, _planet2World, _moon1World, _moon2World;
 	XMFLOAT4X4              _view;
 	XMFLOAT4X4              _projection;
 	// W02 Depth/Stencil Buffer
@@ -52,8 +49,17 @@ private:
 	// W02 Render States
 	ID3D11RasterizerState* _wireFrame;
 	ID3D11RasterizerState* _solidFrame;
+	// W02 Planet Positions
+	XMFLOAT4X4 _planet1World, _planet2World, _moon1World, _moon2World;
 	// W03
 	float _time;
+	ID3D11Buffer* _pPyramidVertexBuffer;
+	ID3D11Buffer* _pPyramidIndexBuffer;
+	ID3D11Buffer* _pGridVertexBuffer;
+	ID3D11Buffer* _pGridIndexBuffer;
+	XMFLOAT4X4 _gridWorld;
+	int _gridWidth, _gridHeight;
+	HRESULT GenerateGrid(int width, int height);
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 	HRESULT InitDevice();

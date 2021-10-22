@@ -40,6 +40,8 @@ Application::Application()
 	_pIndexBuffer = nullptr;
 	_pPyramidVertexBuffer = nullptr;
 	_pPyramidIndexBuffer = nullptr;
+	_pGridVertexBuffer = nullptr;
+	_pGridIndexBuffer = nullptr;
 	_pConstantBuffer = nullptr;
 }
 
@@ -207,6 +209,69 @@ HRESULT Application::InitVertexBuffer()
 		InitData.pSysMem = vertices;
 
 		hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pPyramidVertexBuffer);
+
+		if (FAILED(hr))
+			return hr;
+	}
+
+	return S_OK;
+}
+
+HRESULT Application::GenerateGrid(int width, int height)
+{
+	HRESULT hr;
+
+	_gridWidth = width;
+	_gridHeight = height;
+
+	// Vertex Buffer
+	{
+		SimpleVertex vertices[] =
+		{
+			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
+			{ XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+			{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
+			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) },
+		};
+
+		D3D11_BUFFER_DESC bd;
+		ZeroMemory(&bd, sizeof(bd));
+		bd.Usage = D3D11_USAGE_DEFAULT;
+		bd.ByteWidth = sizeof(SimpleVertex) * 8;
+		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		bd.CPUAccessFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA InitData;
+		ZeroMemory(&InitData, sizeof(InitData));
+		InitData.pSysMem = vertices;
+
+		hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pGridVertexBuffer);
+
+		if (FAILED(hr))
+			return hr;
+	}
+
+	// Index Buffer
+	{
+		WORD indices[] =
+		{
+			// Bottom Face
+			0,2,1,
+			1,2,3,
+		};
+
+		D3D11_BUFFER_DESC bd;
+		ZeroMemory(&bd, sizeof(bd));
+
+		bd.Usage = D3D11_USAGE_DEFAULT;
+		bd.ByteWidth = sizeof(WORD) * 2 * 3;
+		bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		bd.CPUAccessFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA InitData;
+		ZeroMemory(&InitData, sizeof(InitData));
+		InitData.pSysMem = indices;
+		hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pGridIndexBuffer);
 
 		if (FAILED(hr))
 			return hr;
@@ -475,6 +540,8 @@ HRESULT Application::InitDevice()
 
 	InitIndexBuffer();
 
+	GenerateGrid(6, 6);
+
 	// Set index buffer
 	_pImmediateContext->IASetIndexBuffer(_pPyramidIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
@@ -528,6 +595,8 @@ void Application::Cleanup()
 	if (_pIndexBuffer) _pIndexBuffer->Release();
 	if (_pPyramidVertexBuffer) _pPyramidVertexBuffer->Release();
 	if (_pPyramidIndexBuffer) _pPyramidIndexBuffer->Release();
+	if (_pGridVertexBuffer) _pGridVertexBuffer->Release();
+	if (_pGridIndexBuffer) _pGridIndexBuffer->Release();
 	if (_pVertexLayout) _pVertexLayout->Release();
 	if (_pVertexShader) _pVertexShader->Release();
 	if (_pPixelShader) _pPixelShader->Release();
@@ -583,6 +652,8 @@ void Application::Update()
 	XMStoreFloat4x4(&_moon2World, XMMatrixRotationZ(t * 1.5f) * XMMatrixRotationX(t * 1.5f) * // Spin around itself
 		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(0, 3, 0) * XMMatrixRotationZ(t * 2.5f) *
 		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(4, 0, 0) * XMMatrixRotationY(t / 1.5f)); // Planet 1 Transformations
+
+	XMStoreFloat4x4(&_gridWorld, XMMatrixTranslation(0.5f, -2.0f, 0.0f));
 }
 
 void Application::Draw()
@@ -662,6 +733,20 @@ void Application::Draw()
 	cb.mWorld = XMMatrixTranspose(world);
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 	_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0);
+
+	// Set to Grid
+	_pImmediateContext->IASetVertexBuffers(0, 1, &_pGridVertexBuffer, &stride, &offset);
+	_pImmediateContext->IASetIndexBuffer(_pGridIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+
+	// Grid
+	world = XMLoadFloat4x4(&_gridWorld);
+	for (int w = 0; w < _gridWidth; w++)
+		for (int h = 0; h < _gridHeight; h++)
+		{
+			cb.mWorld = XMMatrixTranspose(world * XMMatrixTranslation((w - (_gridWidth / 2)) * 2, 0.0f, (h - (_gridHeight / 2)) * 2));
+			_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+			_pImmediateContext->DrawIndexed(6, 0, 0);
+		}
 
 	//
 	// Present our back buffer to our front buffer
