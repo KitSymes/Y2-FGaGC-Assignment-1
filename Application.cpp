@@ -1,4 +1,5 @@
 #include "Application.h"
+#include <time.h>
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -52,6 +53,19 @@ Application::~Application()
 
 HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 {
+	srand(time(NULL));
+
+	for (int i = 0; i < 100; i++)
+	{
+		_meteorsOffsets[i].x = (rand() % 80 - 40) / 10.0f;
+		if (_meteorsOffsets[i].x > 0 && _meteorsOffsets[i].x < 1.5f)
+			_meteorsOffsets[i].x += 1.5f;
+		_meteorsOffsets[i].y = (rand() % 40 - 20) / 10.0f;
+		_meteorsOffsets[i].z = (rand() % 80 - 40) / 10.0f;
+		if (_meteorsOffsets[i].z > 0 && _meteorsOffsets[i].z < 1.5f)
+			_meteorsOffsets[i].z += 1.5f;
+	}
+
 	if (FAILED(InitWindow(hInstance, nCmdShow)))
 	{
 		return E_FAIL;
@@ -536,14 +550,14 @@ HRESULT Application::InitDevice()
 	// Set vertex buffer
 	UINT stride = sizeof(SimpleVertex);
 	UINT offset = 0;
-	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);
+	_pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBuffer, &stride, &offset);
 
 	InitIndexBuffer();
 
 	GenerateGrid(6, 6);
 
 	// Set index buffer
-	_pImmediateContext->IASetIndexBuffer(_pPyramidIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	_pImmediateContext->IASetIndexBuffer(_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
 	// Set primitive topology
 	_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -653,7 +667,17 @@ void Application::Update()
 		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(0, 3, 0) * XMMatrixRotationZ(t * 2.5f) *
 		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(4, 0, 0) * XMMatrixRotationY(t / 1.5f)); // Planet 1 Transformations
 
+	// Asteroids
+	for (int i = 0; i < 100; i++)
+	{
+		XMStoreFloat4x4(&_meteorsWorlds[i], XMMatrixRotationZ(t * 2.0f) * XMMatrixRotationX(t * 2.0f) * // Spin around itself
+			XMMatrixScaling(0.25f, 0.25f, 0.25f) * XMMatrixTranslation(_meteorsOffsets[i].x, _meteorsOffsets[i].y, _meteorsOffsets[i].z) * XMMatrixRotationY(t * 2.5f) *
+			XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(7, 0, 0) * XMMatrixRotationY(t / 2.5f)); // Planet 2 Transformations
+	}
+
 	XMStoreFloat4x4(&_gridWorld, XMMatrixTranslation(0.5f, -2.0f, 0.0f));
+
+	_showWireFrame = GetAsyncKeyState(VK_LSHIFT);
 }
 
 void Application::Draw()
@@ -702,6 +726,11 @@ void Application::Draw()
 	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
 	_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0); // First parameter is the number of indecies in the index buffer
 
+	if (_showWireFrame)
+		_pImmediateContext->RSSetState(_wireFrame);
+	else
+		_pImmediateContext->RSSetState(_solidFrame);
+
 	// Set to Cube
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBuffer, &stride, &offset);
 	_pImmediateContext->IASetIndexBuffer(_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
@@ -733,6 +762,15 @@ void Application::Draw()
 	cb.mWorld = XMMatrixTranspose(world);
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 	_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0);
+
+	// Asteroid Belt
+	for (int i = 0; i < 100; i++)
+	{
+		world = XMLoadFloat4x4(&_meteorsWorlds[i]);
+		cb.mWorld = XMMatrixTranspose(world);
+		_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+		_pImmediateContext->DrawIndexed(6 * 6, 0, 0);
+	}
 
 	// Set to Grid
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_pGridVertexBuffer, &stride, &offset);

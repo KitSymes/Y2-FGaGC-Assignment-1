@@ -6,6 +6,7 @@
 #include <directxmath.h>
 #include <directxcolors.h>
 #include "resource.h"
+#include "Vector3.h"
 
 using namespace DirectX;
 
@@ -47,10 +48,13 @@ private:
 	ID3D11DepthStencilView* _depthStencilView;
 	ID3D11Texture2D* _depthStencilBuffer;
 	// W02 Render States
+	bool					_showWireFrame = false;
 	ID3D11RasterizerState* _wireFrame;
 	ID3D11RasterizerState* _solidFrame;
 	// W02 Planet Positions
 	XMFLOAT4X4 _planet1World, _planet2World, _moon1World, _moon2World;
+	Vector3					_meteorsOffsets[100];
+	XMFLOAT4X4				_meteorsWorlds[100];
 	// W03
 	float _time;
 	ID3D11Buffer* _pPyramidVertexBuffer;
