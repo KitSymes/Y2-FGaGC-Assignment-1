@@ -1,4 +1,7 @@
 #pragma once
+#ifndef _VERTEX_H
+#define _VERTEX_H
+
 class Vector3
 {
 public:
@@ -23,4 +26,4 @@ public:
 	Vector3 CrossProduct(const Vector3& vec);
 	float Magnitude();
 };
-
+#endif
