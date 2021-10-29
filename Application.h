@@ -13,7 +13,7 @@ using namespace DirectX;
 struct SimpleVertex
 {
     XMFLOAT3 Pos;
-    XMFLOAT4 Color;
+    XMFLOAT3 Normal;
 };
 
 struct ConstantBuffer
@@ -21,6 +21,15 @@ struct ConstantBuffer
 	XMMATRIX mWorld;
 	XMMATRIX mView;
 	XMMATRIX mProjection;
+	XMFLOAT4 DiffuseMtrl;
+	XMFLOAT4 DiffuseLight;
+	XMFLOAT3 LightVecW;
+	XMFLOAT4 AmbientMtrl;
+	XMFLOAT4 AmbientLight;
+	XMFLOAT4 SpecularMtrl;
+	XMFLOAT4 SpecularLight;
+	float SpecularPower;
+	XMFLOAT3 EyePosW;
 	float mTime;
 };
 
@@ -64,6 +73,16 @@ private:
 	XMFLOAT4X4 _gridWorld;
 	int _gridWidth, _gridHeight;
 	HRESULT GenerateGrid(int width, int height);
+	// W04
+	XMFLOAT3 lightDirection;
+	XMFLOAT4 diffuseMaterial;
+	XMFLOAT4 diffuseLight;
+	XMFLOAT4 ambientMaterial;
+	XMFLOAT4 ambientLight;
+	XMFLOAT4 specularMaterial;
+	XMFLOAT4 specularLight;
+	float specularPower;
+	XMFLOAT3 EyePosW;
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 	HRESULT InitDevice();

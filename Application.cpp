@@ -55,6 +55,26 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 {
 	srand(time(NULL));
 
+	// Light direction from surface (XYZ)
+	lightDirection = XMFLOAT3(0.25f, 0.5f, -1.0f);
+	//lightDirection = XMFLOAT3(0.0f, 1.0f, 0.0f);
+	// Diffuse material properties (RGBA)
+	diffuseMaterial = XMFLOAT4(0.8f, 0.5f, 0.5f, 1.0f);
+	// Diffuse light colour (RGBA)
+	diffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	// Ambient material properties (RGBA)
+	ambientMaterial = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f);
+	// Ambient light colour (RGBA)
+	ambientLight = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f);
+
+	// Specular material properties (RGBA)
+	specularMaterial = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	// Specular light colour (RGBA)
+	specularLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	specularPower = 0.5;
+	EyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
+
 	for (int i = 0; i < 100; i++)
 	{
 		_meteorsOffsets[i].x = (rand() % 80 - 40) / 10.0f;
@@ -145,7 +165,7 @@ HRESULT Application::InitShadersAndInputLayout()
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
 	UINT numElements = ARRAYSIZE(layout);
@@ -172,15 +192,15 @@ HRESULT Application::InitVertexBuffer()
 		// Create vertex buffer
 		SimpleVertex vertices[] =
 		{
-			{ XMFLOAT3(-1.0f, 1.0f, -1.0f),  XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
-			{ XMFLOAT3(1.0f, 1.0f, -1.0f),   XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+			{ XMFLOAT3(-1.0f, 1.0f, -1.0f),  XMFLOAT3(0.5773f, -0.5773f, 0.5773f) },
+			{ XMFLOAT3(1.0f, 1.0f, -1.0f),   XMFLOAT3(-0.5773f, 0.5773f, -0.5773f) },
+			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(-0.5773f, 0.5773f, 0.5773f) },
+			{ XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT3(0.5773f, 0.5773f, 0.5773f) },
 
-			{ XMFLOAT3(-1.0f, 1.0f, 1.0f),  XMFLOAT4(255.0f / 255.0f, 255.0f / 255.0f, 60.0f / 255.0f, 1.0f) },
-			{ XMFLOAT3(1.0f, 1.0f, 1.0f),   XMFLOAT4(160.0f / 255.0f, 60.0f / 255.0f, 255.0f / 255.0f, 1.0f) },
-			{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(255.0f / 255.0f, 60.0f / 255.0f, 245.0f / 255.0f, 1.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT4(90.0f / 255.0f, 255.0f / 255.0f, 60.0f / 255.0f, 1.0f) },
+			{ XMFLOAT3(-1.0f, 1.0f, 1.0f),  XMFLOAT3(-0.5773f, -0.5773f, -0.5773f) },
+			{ XMFLOAT3(1.0f, 1.0f, 1.0f),   XMFLOAT3(0.5773f, 0.5773f, -0.5773f) },
+			{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.5773f, -0.5773f, -0.5773f) },
+			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT3(-0.5773f, -0.5773f, 0.5773f) },
 		};
 
 		D3D11_BUFFER_DESC bd;
@@ -204,11 +224,11 @@ HRESULT Application::InitVertexBuffer()
 		// Create pyramid vertex buffer
 		SimpleVertex vertices[] =
 		{
-			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-			{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-			{ XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
+			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(-0.6626f, -0.3490f, -0.6626f) },
+			{ XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT3(-0.6626f, -0.3490f, 0.6626f) },
+			{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.6626f, -0.3490f, -0.6626f) },
+			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT3(0.6626f, -0.3490f, 0.6626f) },
+			{ XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT3(0.0f, 1.0f, 0.0f) },
 		};
 
 		D3D11_BUFFER_DESC bd;
@@ -242,10 +262,10 @@ HRESULT Application::GenerateGrid(int width, int height)
 	{
 		SimpleVertex vertices[] =
 		{
-			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-			{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) },
+			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f) },
+			{ XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT3(0.0f, 1.0f, 0.0f) },
+			{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f) },
+			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT3(0.0f, 1.0f, 0.0f) },
 		};
 
 		D3D11_BUFFER_DESC bd;
@@ -698,17 +718,31 @@ void Application::Draw()
 	cb.mWorld = XMMatrixTranspose(world);
 	cb.mView = XMMatrixTranspose(view);
 	cb.mProjection = XMMatrixTranspose(projection);
+	cb.DiffuseMtrl = diffuseMaterial;
+	cb.DiffuseLight = diffuseLight;
+	cb.LightVecW = lightDirection;
+	cb.AmbientMtrl = ambientMaterial;
+	cb.AmbientLight = ambientLight;
+	cb.SpecularMtrl = specularMaterial;
+	cb.SpecularLight = specularLight;
+	cb.SpecularPower = specularPower;
+	cb.EyePosW = EyePosW;
 	cb.mTime = _time;
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
 	// Set to wire frame (for default pass nullptr)
 	//_pImmediateContext->RSSetState(_wireFrame);
-	_pImmediateContext->RSSetState(_solidFrame);
+	//_pImmediateContext->RSSetState(_solidFrame);
 
 	//
 	// Renders a triangle
 	//
+
+	if (_showWireFrame)
+		_pImmediateContext->RSSetState(_wireFrame);
+	else
+		_pImmediateContext->RSSetState(_solidFrame);
 
 	int cubeIndexCount = 6 * 6;
 	int pyramidIndexCount = 3 * 6;
@@ -725,11 +759,6 @@ void Application::Draw()
 	_pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
 	_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0); // First parameter is the number of indecies in the index buffer
-
-	if (_showWireFrame)
-		_pImmediateContext->RSSetState(_wireFrame);
-	else
-		_pImmediateContext->RSSetState(_solidFrame);
 
 	// Set to Cube
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBuffer, &stride, &offset);
@@ -769,7 +798,7 @@ void Application::Draw()
 		world = XMLoadFloat4x4(&_meteorsWorlds[i]);
 		cb.mWorld = XMMatrixTranspose(world);
 		_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-		_pImmediateContext->DrawIndexed(6 * 6, 0, 0);
+		_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0);
 	}
 
 	// Set to Grid
