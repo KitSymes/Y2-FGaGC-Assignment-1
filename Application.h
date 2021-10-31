@@ -24,13 +24,14 @@ struct ConstantBuffer
 	XMFLOAT4 DiffuseMtrl;
 	XMFLOAT4 DiffuseLight;
 	XMFLOAT3 LightVecW;
+	float p1;
 	XMFLOAT4 AmbientMtrl;
 	XMFLOAT4 AmbientLight;
 	XMFLOAT4 SpecularMtrl;
 	XMFLOAT4 SpecularLight;
-	float SpecularPower;
 	XMFLOAT3 EyePosW;
-	float mTime;
+	float p2;
+	float SpecularPower;
 };
 
 class Application

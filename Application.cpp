@@ -64,16 +64,20 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	diffuseLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Ambient material properties (RGBA)
-	ambientMaterial = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f);
+	ambientMaterial = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	// Ambient light colour (RGBA)
-	ambientLight = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.2f);
+	ambientLight = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0);
 
 	// Specular material properties (RGBA)
-	specularMaterial = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	specularMaterial = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	// Specular light colour (RGBA)
-	specularLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	specularPower = 0.5;
-	EyePosW = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	specularLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	specularPower = 100.0;
+
+	//specularMaterial = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	//specularLight = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+
+	EyePosW = XMFLOAT3(0.0f, 4.0f, -8.0f);
 
 	for (int i = 0; i < 100; i++)
 	{
@@ -668,7 +672,7 @@ void Application::Update()
 	//
 
 	// Sun
-	XMStoreFloat4x4(&_world, XMMatrixTranslation(0, 0, -1) * XMMatrixRotationY(t / 4));
+	XMStoreFloat4x4(&_world, XMMatrixRotationY(t / 4));
 
 	// Planet 1
 	// Planet Spin Z * Planet Spin X * Planet Scale * Planet Move * Panet Orbit Y
@@ -727,7 +731,7 @@ void Application::Draw()
 	cb.SpecularLight = specularLight;
 	cb.SpecularPower = specularPower;
 	cb.EyePosW = EyePosW;
-	cb.mTime = _time;
+	//cb.mTime = _time;
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
