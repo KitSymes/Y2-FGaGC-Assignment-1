@@ -91,7 +91,7 @@ float4 PS( VS_OUTPUT input ) : SV_Target
     float4 textureColour = txDiffuse.Sample(samLinear, input.Tex);
     
     // Calculate Lighting
-    f.rgb = textureColour.rgb + diffuse + ambient + specular;
+    f.rgb = textureColour.rgb * (diffuse + ambient + specular);
     f.a = textureColour.a;
     return f;
 }
