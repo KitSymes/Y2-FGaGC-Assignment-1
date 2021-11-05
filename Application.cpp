@@ -56,7 +56,7 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	srand(time(NULL));
 
 	// Light direction from surface (XYZ)
-	lightDirection = XMFLOAT3(0.25f, 0.5f, -1.0f);
+	lightDirection = XMFLOAT3(0.25f, 0.5f, 1.0f);
 	//lightDirection = XMFLOAT3(0.0f, 1.0f, 0.0f);
 	// Diffuse material properties (RGBA)
 	diffuseMaterial = XMFLOAT4(0.8f, 0.5f, 0.5f, 1.0f);
@@ -72,7 +72,7 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	specularMaterial = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	// Specular light colour (RGBA)
 	specularLight = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	specularPower = 100.0;
+	specularPower = 2.0;
 
 	//specularMaterial = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	//specularLight = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -170,6 +170,7 @@ HRESULT Application::InitShadersAndInputLayout()
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
 	UINT numElements = ARRAYSIZE(layout);
@@ -196,15 +197,15 @@ HRESULT Application::InitVertexBuffer()
 		// Create vertex buffer
 		SimpleVertex vertices[] =
 		{
-			{ XMFLOAT3(-1.0f, 1.0f, -1.0f),  XMFLOAT3(0.5773f, -0.5773f, 0.5773f) },
-			{ XMFLOAT3(1.0f, 1.0f, -1.0f),   XMFLOAT3(-0.5773f, 0.5773f, -0.5773f) },
-			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(-0.5773f, 0.5773f, 0.5773f) },
-			{ XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT3(0.5773f, 0.5773f, 0.5773f) },
+			{ XMFLOAT3(-1.0f, 1.0f, -1.0f),   XMFLOAT3(0.5773f, -0.5773f, 0.5773f),		XMFLOAT2(0.0f, 0.0f) },
+			{ XMFLOAT3(1.0f, 1.0f, -1.0f),    XMFLOAT3(-0.5773f, 0.5773f, -0.5773f),	XMFLOAT2(1.0f, 0.0f) },
+			{ XMFLOAT3(-1.0f, -1.0f, -1.0f),  XMFLOAT3(-0.5773f, 0.5773f, 0.5773f),		XMFLOAT2(0.0f, 1.0f) },
+			{ XMFLOAT3(1.0f, -1.0f, -1.0f),   XMFLOAT3(0.5773f, 0.5773f, 0.5773f),		XMFLOAT2(1.0f, 1.0f) },
 
-			{ XMFLOAT3(-1.0f, 1.0f, 1.0f),  XMFLOAT3(-0.5773f, -0.5773f, -0.5773f) },
-			{ XMFLOAT3(1.0f, 1.0f, 1.0f),   XMFLOAT3(0.5773f, 0.5773f, -0.5773f) },
-			{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.5773f, -0.5773f, -0.5773f) },
-			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT3(-0.5773f, -0.5773f, 0.5773f) },
+			{ XMFLOAT3(-1.0f, 1.0f, 1.0f),	 XMFLOAT3(-0.5773f, -0.5773f, -0.5773f),	XMFLOAT2(0.0f, 0.0f) },
+			{ XMFLOAT3(1.0f, 1.0f, 1.0f),    XMFLOAT3(0.5773f, 0.5773f, -0.5773f),		XMFLOAT2(1.0f, 0.0f) },
+			{ XMFLOAT3(-1.0f, -1.0f, 1.0f),  XMFLOAT3(0.5773f, -0.5773f, -0.5773f),		XMFLOAT2(0.0f, 1.0f) },
+			{ XMFLOAT3(1.0f, -1.0f, 1.0f),   XMFLOAT3(-0.5773f, -0.5773f, 0.5773f),		XMFLOAT2(1.0f, 1.0f) },
 		};
 
 		D3D11_BUFFER_DESC bd;
@@ -228,11 +229,11 @@ HRESULT Application::InitVertexBuffer()
 		// Create pyramid vertex buffer
 		SimpleVertex vertices[] =
 		{
-			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(-0.6626f, -0.3490f, -0.6626f) },
-			{ XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT3(-0.6626f, -0.3490f, 0.6626f) },
-			{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.6626f, -0.3490f, -0.6626f) },
-			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT3(0.6626f, -0.3490f, 0.6626f) },
-			{ XMFLOAT3(0.0f, 1.0f, 0.0f),  XMFLOAT3(0.0f, 1.0f, 0.0f) },
+			{ XMFLOAT3(-1.0f, -1.0f, -1.0f),	XMFLOAT3(-0.6626f, -0.3490f, -0.6626f),	XMFLOAT2(0.0f, 0.0f) },
+			{ XMFLOAT3(1.0f, -1.0f, -1.0f),		XMFLOAT3(-0.6626f, -0.3490f, 0.6626f),	XMFLOAT2(1.0f, 0.0f) },
+			{ XMFLOAT3(-1.0f, -1.0f, 1.0f),		XMFLOAT3(0.6626f, -0.3490f, -0.6626f),	XMFLOAT2(0.0f, 1.0f) },
+			{ XMFLOAT3(1.0f, -1.0f, 1.0f),		XMFLOAT3(0.6626f, -0.3490f, 0.6626f),	XMFLOAT2(1.0f, 1.0f) },
+			{ XMFLOAT3(0.0f, 1.0f, 0.0f),		XMFLOAT3(0.0f, 1.0f, 0.0f),				XMFLOAT2(0.5f, 0.5f) },
 		};
 
 		D3D11_BUFFER_DESC bd;
@@ -266,10 +267,10 @@ HRESULT Application::GenerateGrid(int width, int height)
 	{
 		SimpleVertex vertices[] =
 		{
-			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT3(0.0f, 1.0f, 0.0f) },
-			{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT3(0.0f, 1.0f, 0.0f) },
+			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f),	XMFLOAT2(0.0f, 0.0f) },
+			{ XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT3(0.0f, 1.0f, 0.0f),	XMFLOAT2(0.0f, 1.0f) },
+			{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f),		XMFLOAT2(1.0f, 0.0f) },
+			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT3(0.0f, 1.0f, 0.0f),		XMFLOAT2(1.0f, 1.0f) },
 		};
 
 		D3D11_BUFFER_DESC bd;
@@ -615,6 +616,30 @@ HRESULT Application::InitDevice()
 
 	if (FAILED(hr))
 		return hr;
+
+	hr = CreateDDSTextureFromFile(_pd3dDevice, L"Crate_COLOR.dds", nullptr, &_pTextureRV);
+
+	if (FAILED(hr))
+		return hr;
+	
+	_pImmediateContext->PSSetShaderResources(0, 1, &_pTextureRV);
+
+	// Create the sample state
+	D3D11_SAMPLER_DESC sampDesc;
+	ZeroMemory(&sampDesc, sizeof(sampDesc));
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	_pd3dDevice->CreateSamplerState(&sampDesc, &_pSamplerLinear);
+
+	if (FAILED(hr))
+		return hr;
+
+	_pImmediateContext->PSSetSamplers(0, 1, &_pSamplerLinear);
 
 	return S_OK;
 }
