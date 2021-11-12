@@ -8,15 +8,10 @@
 #include "resource.h"
 #include "Vector3.h"
 #include "DDSTextureLoader.h"
+#include "Structures.h"
+#include "OBJLoader.h"
 
 using namespace DirectX;
-
-struct SimpleVertex
-{
-    XMFLOAT3 Pos;
-    XMFLOAT3 Normal;
-	XMFLOAT2 TexC;
-};
 
 struct ConstantBuffer
 {
@@ -49,8 +44,8 @@ private:
 	ID3D11VertexShader*     _pVertexShader;
 	ID3D11PixelShader*      _pPixelShader;
 	ID3D11InputLayout*      _pVertexLayout;
-	ID3D11Buffer*           _pVertexBuffer;
-	ID3D11Buffer*           _pIndexBuffer;
+	//ID3D11Buffer*           _pVertexBuffer;
+	//ID3D11Buffer*           _pIndexBuffer;
 	ID3D11Buffer*           _pConstantBuffer;
 	XMFLOAT4X4              _world;
 	XMFLOAT4X4              _view;
@@ -88,6 +83,9 @@ private:
 	// W05
 	ID3D11ShaderResourceView* _pTextureRV = nullptr;
 	ID3D11SamplerState* _pSamplerLinear = nullptr;
+	// W06
+	MeshData _sphereMeshData;
+	MeshData _cubeMeshData;
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 	HRESULT InitDevice();

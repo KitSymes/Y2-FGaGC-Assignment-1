@@ -37,8 +37,8 @@ Application::Application()
 	_pVertexShader = nullptr;
 	_pPixelShader = nullptr;
 	_pVertexLayout = nullptr;
-	_pVertexBuffer = nullptr;
-	_pIndexBuffer = nullptr;
+	/*_pVertexBuffer = nullptr;
+	_pIndexBuffer = nullptr;*/
 	_pPyramidVertexBuffer = nullptr;
 	_pPyramidIndexBuffer = nullptr;
 	_pGridVertexBuffer = nullptr;
@@ -120,6 +120,10 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	// Initialize the projection matrix
 	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _WindowWidth / (FLOAT)_WindowHeight, 0.01f, 100.0f));
 
+	// OBJ Init Stuff - The false at the end is "wether to flip the texture co-ords or not", false for Blender and not needed for 3DS Max
+	_sphereMeshData = OBJLoader::Load("sphere.obj", _pd3dDevice, false);
+	_cubeMeshData = OBJLoader::Load("cube.obj", _pd3dDevice, false);
+
 	return S_OK;
 }
 
@@ -193,7 +197,7 @@ HRESULT Application::InitVertexBuffer()
 {
 	HRESULT hr;
 
-	{
+	/*{
 		// Create vertex buffer
 		SimpleVertex vertices[] =
 		{
@@ -223,7 +227,7 @@ HRESULT Application::InitVertexBuffer()
 
 		if (FAILED(hr))
 			return hr;
-	}
+	}*/
 
 	{
 		// Create pyramid vertex buffer
@@ -323,7 +327,7 @@ HRESULT Application::InitIndexBuffer()
 {
 	HRESULT hr;
 
-	{
+	/*{
 		// Create index buffer
 		WORD indices[] =
 		{
@@ -362,7 +366,7 @@ HRESULT Application::InitIndexBuffer()
 
 		if (FAILED(hr))
 			return hr;
-	}
+	}*/
 
 	{
 		// Create Pyramid index buffer
@@ -572,17 +576,17 @@ HRESULT Application::InitDevice()
 
 	InitVertexBuffer();
 
-	// Set vertex buffer
-	UINT stride = sizeof(SimpleVertex);
-	UINT offset = 0;
-	_pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBuffer, &stride, &offset);
 
 	InitIndexBuffer();
 
 	GenerateGrid(6, 6);
 
+	/*// Set vertex buffer
+	UINT stride = sizeof(SimpleVertex);
+	UINT offset = 0;
+	_pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBuffer, &stride, &offset);
 	// Set index buffer
-	_pImmediateContext->IASetIndexBuffer(_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	_pImmediateContext->IASetIndexBuffer(_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);*/
 
 	// Set primitive topology
 	_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -654,8 +658,9 @@ void Application::Cleanup()
 
 	if (_depthStencilBuffer) _depthStencilBuffer->Release();
 	if (_pConstantBuffer) _pConstantBuffer->Release();
-	if (_pVertexBuffer) _pVertexBuffer->Release();
-	if (_pIndexBuffer) _pIndexBuffer->Release();
+	//if (_pVertexBuffer) _pVertexBuffer->Release();
+	//if (_pIndexBuffer) _pIndexBuffer->Release();
+
 	if (_pPyramidVertexBuffer) _pPyramidVertexBuffer->Release();
 	if (_pPyramidIndexBuffer) _pPyramidIndexBuffer->Release();
 	if (_pGridVertexBuffer) _pGridVertexBuffer->Release();
@@ -773,37 +778,37 @@ void Application::Draw()
 	else
 		_pImmediateContext->RSSetState(_solidFrame);
 
-	int cubeIndexCount = 6 * 6;
+	//int cubeIndexCount = 6 * 6;
 	int pyramidIndexCount = 3 * 6;
 
 	UINT stride = sizeof(SimpleVertex);
 	UINT offset = 0;
 
-	// Set to Pyramid
-	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);
-	_pImmediateContext->IASetIndexBuffer(_pPyramidIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	// Set to Sphere
+	_pImmediateContext->IASetVertexBuffers(0, 1, &_sphereMeshData.VertexBuffer, &stride, &offset);
+	_pImmediateContext->IASetIndexBuffer(_sphereMeshData.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
 	_pImmediateContext->VSSetShader(_pVertexShader, nullptr, 0);
 	_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
-	_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0); // First parameter is the number of indecies in the index buffer
+	_pImmediateContext->DrawIndexed(_sphereMeshData.IndexCount, 0, 0); // First parameter is the number of indecies in the index buffer
 
 	// Set to Cube
-	_pImmediateContext->IASetVertexBuffers(0, 1, &_pVertexBuffer, &stride, &offset);
-	_pImmediateContext->IASetIndexBuffer(_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	_pImmediateContext->IASetVertexBuffers(0, 1, &_cubeMeshData.VertexBuffer, &stride, &offset);
+	_pImmediateContext->IASetIndexBuffer(_cubeMeshData.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
 	// First Planet
 	world = XMLoadFloat4x4(&_planet1World);
 	cb.mWorld = XMMatrixTranspose(world);
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-	_pImmediateContext->DrawIndexed(cubeIndexCount, 0, 0);
+	_pImmediateContext->DrawIndexed(_cubeMeshData.IndexCount, 0, 0);
 
 	// Second Planet
 	world = XMLoadFloat4x4(&_planet2World);
 	cb.mWorld = XMMatrixTranspose(world);
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-	_pImmediateContext->DrawIndexed(cubeIndexCount, 0, 0);
+	_pImmediateContext->DrawIndexed(_cubeMeshData.IndexCount, 0, 0);
 
 	// Set to Pyramid
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);
