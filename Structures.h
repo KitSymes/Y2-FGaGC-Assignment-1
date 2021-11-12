@@ -18,4 +18,22 @@ struct SimpleVertex
 		return memcmp((void*)this, (void*)&other, sizeof(SimpleVertex)) > 0;
 	};
 };
+
+struct ConstantBuffer
+{
+	XMMATRIX mWorld;
+	XMMATRIX mView;
+	XMMATRIX mProjection;
+	XMFLOAT4 DiffuseMtrl;
+	XMFLOAT4 DiffuseLight;
+	XMFLOAT3 LightVecW;
+	float p1;
+	XMFLOAT4 AmbientMtrl;
+	XMFLOAT4 AmbientLight;
+	XMFLOAT4 SpecularMtrl;
+	XMFLOAT4 SpecularLight;
+	XMFLOAT3 EyePosW;
+	float SpecularPower;
+};
+
 #endif

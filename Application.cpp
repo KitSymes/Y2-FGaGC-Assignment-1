@@ -124,6 +124,9 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	_sphereMeshData = OBJLoader::Load("sphere.obj", _pd3dDevice, false);
 	_cubeMeshData = OBJLoader::Load("cube.obj", _pd3dDevice, false);
 
+	_testSunGeo = new Geometry(&_sphereMeshData , _pTextureRV);
+	_testSun = new GameObject(_testSunGeo);
+
 	return S_OK;
 }
 
@@ -660,7 +663,6 @@ void Application::Cleanup()
 	if (_pConstantBuffer) _pConstantBuffer->Release();
 	//if (_pVertexBuffer) _pVertexBuffer->Release();
 	//if (_pIndexBuffer) _pIndexBuffer->Release();
-
 	if (_pPyramidVertexBuffer) _pPyramidVertexBuffer->Release();
 	if (_pPyramidIndexBuffer) _pPyramidIndexBuffer->Release();
 	if (_pGridVertexBuffer) _pGridVertexBuffer->Release();
@@ -672,6 +674,9 @@ void Application::Cleanup()
 	if (_pSwapChain) _pSwapChain->Release();
 	if (_pImmediateContext) _pImmediateContext->Release();
 	if (_pd3dDevice) _pd3dDevice->Release();
+
+	if (_testSun)
+		delete _testSun;
 }
 
 void Application::Update()
@@ -731,6 +736,8 @@ void Application::Update()
 
 	XMStoreFloat4x4(&_gridWorld, XMMatrixTranslation(0.5f, -2.0f, 0.0f));
 
+	_testSun->Update(t);
+
 	_showWireFrame = GetAsyncKeyState(VK_LSHIFT);
 }
 
@@ -785,14 +792,17 @@ void Application::Draw()
 	UINT offset = 0;
 
 	// Set to Sphere
-	_pImmediateContext->IASetVertexBuffers(0, 1, &_sphereMeshData.VertexBuffer, &stride, &offset);
-	_pImmediateContext->IASetIndexBuffer(_sphereMeshData.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	//_pImmediateContext->IASetVertexBuffers(0, 1, &_sphereMeshData.VertexBuffer, &stride, &offset);
+	//_pImmediateContext->IASetIndexBuffer(_sphereMeshData.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
 	_pImmediateContext->VSSetShader(_pVertexShader, nullptr, 0);
 	_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
-	_pImmediateContext->DrawIndexed(_sphereMeshData.IndexCount, 0, 0); // First parameter is the number of indecies in the index buffer
+	
+	//_pImmediateContext->DrawIndexed(_sphereMeshData.IndexCount, 0, 0); // First parameter is the number of indecies in the index buffer
+
+	_testSun->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 
 	// Set to Cube
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_cubeMeshData.VertexBuffer, &stride, &offset);

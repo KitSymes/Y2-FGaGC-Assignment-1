@@ -17,6 +17,8 @@
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="OBJLoader.h" />
     <ClInclude Include="Structures.h" />
+    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="Geometry.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -25,6 +27,8 @@
     <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="OBJLoader.cpp" />
+    <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="Geometry.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
