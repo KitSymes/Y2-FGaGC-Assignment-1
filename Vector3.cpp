@@ -2,10 +2,7 @@
 #include <assert.h>
 #include <math.h>
 
-Vector3::Vector3()
-{
-	Vector3(0.0f, 0.0f, 0.0f);
-}
+Vector3::Vector3() : Vector3(0.0f, 0.0f, 0.0f) {}
 
 Vector3::Vector3(float x, float y, float z)
 {
@@ -14,10 +11,7 @@ Vector3::Vector3(float x, float y, float z)
 	this->z = z;
 }
 
-Vector3::Vector3(const Vector3& copyFrom)
-{
-	Vector3(copyFrom.x, copyFrom.y, copyFrom.z);
-}
+Vector3::Vector3(const Vector3& copyFrom) : Vector3(copyFrom.x, copyFrom.y, copyFrom.z) {}
 
 Vector3 Vector3::operator+(const Vector3& rhs)
 {

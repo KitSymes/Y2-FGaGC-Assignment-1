@@ -124,8 +124,12 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	_sphereMeshData = OBJLoader::Load("sphere.obj", _pd3dDevice, false);
 	_cubeMeshData = OBJLoader::Load("cube.obj", _pd3dDevice, false);
 
-	_testSunGeo = new Geometry(&_sphereMeshData , _pTextureRV);
-	_testSun = new GameObject(_testSunGeo);
+	_sunGeo = new Geometry(&_sphereMeshData, _pTextureRV);
+	_sun = new GameObject(_sunGeo, Vector3(), nullptr);
+
+	_planetGeo = new Geometry(&_cubeMeshData, _pTextureRV);
+	_planet1 = new OrbitGameObject(_sun, _planetGeo, (float)2/3, Vector3(4.0f, 0.0f, 0.0f), _sun);
+	_planet1->_scale = Vector3(0.5f, 0.5f, 0.5f);
 
 	return S_OK;
 }
@@ -675,8 +679,14 @@ void Application::Cleanup()
 	if (_pImmediateContext) _pImmediateContext->Release();
 	if (_pd3dDevice) _pd3dDevice->Release();
 
-	if (_testSun)
-		delete _testSun;
+	//if (_sun)
+	//	delete _sun;
+	//if (_sunGeo)
+	//	delete _sunGeo;
+	//if (_planet1)
+	//	delete _planet1;
+	//if (_planetGeo)
+	//	delete _planetGeo;
 }
 
 void Application::Update()
@@ -709,10 +719,10 @@ void Application::Update()
 	// Sun
 	XMStoreFloat4x4(&_world, XMMatrixRotationY(t / 4));
 
-	// Planet 1
+	/*// Planet 1
 	// Planet Spin Z * Planet Spin X * Planet Scale * Planet Move * Panet Orbit Y
 	XMStoreFloat4x4(&_planet1World, XMMatrixRotationZ(t) * XMMatrixRotationX(t) * // Spin around itself
-		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(4, 0, 0) * XMMatrixRotationY(t / 1.5f)); // Scale, Move then Orbit
+		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(4, 0, 0) * XMMatrixRotationY(t / 1.5f)); // Scale, Move then Orbit*/
 	// Planet2
 	XMStoreFloat4x4(&_planet2World, XMMatrixRotationZ(t) * XMMatrixRotationX(t) * // Spin around itself
 		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(7, 0, 0) * XMMatrixRotationY(t / 2.5f)); // Scale, Move then Orbit
@@ -736,7 +746,8 @@ void Application::Update()
 
 	XMStoreFloat4x4(&_gridWorld, XMMatrixTranslation(0.5f, -2.0f, 0.0f));
 
-	_testSun->Update(t);
+	_sun->Update(t);
+	_planet1->Update(t);
 
 	_showWireFrame = GetAsyncKeyState(VK_LSHIFT);
 }
@@ -791,28 +802,30 @@ void Application::Draw()
 	UINT stride = sizeof(SimpleVertex);
 	UINT offset = 0;
 
-	// Set to Sphere
-	//_pImmediateContext->IASetVertexBuffers(0, 1, &_sphereMeshData.VertexBuffer, &stride, &offset);
-	//_pImmediateContext->IASetIndexBuffer(_sphereMeshData.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-
 	_pImmediateContext->VSSetShader(_pVertexShader, nullptr, 0);
 	_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
 	
+
+	// Set to Sphere
+	//_pImmediateContext->IASetVertexBuffers(0, 1, &_sphereMeshData.VertexBuffer, &stride, &offset);
+	//_pImmediateContext->IASetIndexBuffer(_sphereMeshData.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	// 
 	//_pImmediateContext->DrawIndexed(_sphereMeshData.IndexCount, 0, 0); // First parameter is the number of indecies in the index buffer
 
-	_testSun->Draw(_pImmediateContext, &cb, _pConstantBuffer);
+	_sun->Draw(_pImmediateContext, &cb, _pConstantBuffer);
+	_planet1->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 
 	// Set to Cube
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_cubeMeshData.VertexBuffer, &stride, &offset);
 	_pImmediateContext->IASetIndexBuffer(_cubeMeshData.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
-	// First Planet
+	/*// First Planet
 	world = XMLoadFloat4x4(&_planet1World);
 	cb.mWorld = XMMatrixTranspose(world);
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-	_pImmediateContext->DrawIndexed(_cubeMeshData.IndexCount, 0, 0);
+	_pImmediateContext->DrawIndexed(_cubeMeshData.IndexCount, 0, 0);*/
 
 	// Second Planet
 	world = XMLoadFloat4x4(&_planet2World);

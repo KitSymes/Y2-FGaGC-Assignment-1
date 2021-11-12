@@ -11,6 +11,7 @@
 #include "Structures.h"
 #include "OBJLoader.h"
 #include "GameObject.h"
+#include "OrbitGameObject.h"
 
 using namespace DirectX;
 
@@ -42,7 +43,8 @@ private:
 	ID3D11RasterizerState* _wireFrame;
 	ID3D11RasterizerState* _solidFrame;
 	// W02 Planet Positions
-	XMFLOAT4X4 _planet1World, _planet2World, _moon1World, _moon2World;
+	//XMFLOAT4X4 _planet1World;
+	XMFLOAT4X4 _planet2World, _moon1World, _moon2World;
 	Vector3					_meteorsOffsets[100];
 	XMFLOAT4X4				_meteorsWorlds[100];
 	// W03
@@ -70,8 +72,10 @@ private:
 	// W06
 	MeshData _sphereMeshData;
 	MeshData _cubeMeshData;
-	Geometry* _testSunGeo;
-	GameObject* _testSun;
+	Geometry* _sunGeo;
+	GameObject* _sun;
+	Geometry* _planetGeo;
+	GameObject* _planet1;
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 	HRESULT InitDevice();

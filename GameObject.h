@@ -9,18 +9,21 @@
 
 class GameObject
 {
-private:
-public:
+protected:
 	Geometry* _mesh;
+	XMFLOAT4X4 _world;
+	GameObject* _parent;
+
+	Vector3 GetOffset();
+public:
 	Vector3 _position;
 	Vector3 _rotation;
 	Vector3 _scale;
 
-	XMFLOAT4X4 _world;
-	GameObject(Geometry* mesh, Vector3 position = Vector3());
-	~GameObject();
+	GameObject(Geometry* mesh, Vector3 position, GameObject* parent);
+	virtual ~GameObject();
 
-	void Update(float t);
+	virtual void Update(float time);
 	void Draw(ID3D11DeviceContext* _pImmediateContext, ConstantBuffer* cb, ID3D11Buffer* _pConstantBuffer);
 };
 #endif
