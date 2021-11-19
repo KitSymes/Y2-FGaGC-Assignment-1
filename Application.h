@@ -12,6 +12,7 @@
 #include "OBJLoader.h"
 #include "GameObject.h"
 #include "OrbitGameObject.h"
+#include "Camera.h"
 
 using namespace DirectX;
 
@@ -33,8 +34,8 @@ private:
 	//ID3D11Buffer*           _pIndexBuffer;
 	ID3D11Buffer*           _pConstantBuffer;
 	XMFLOAT4X4              _world;
-	XMFLOAT4X4              _view;
-	XMFLOAT4X4              _projection;
+	//XMFLOAT4X4              _view;
+	//XMFLOAT4X4              _projection;
 	// W02 Depth/Stencil Buffer
 	ID3D11DepthStencilView* _depthStencilView;
 	ID3D11Texture2D* _depthStencilBuffer;
@@ -76,6 +77,12 @@ private:
 	GameObject* _sun;
 	Geometry* _planetGeo;
 	GameObject* _planet1;
+	// W07
+	Camera* _camera;
+	Camera* _camera1;
+	Camera* _camera2;
+	Camera* _camera3;
+	Camera* _camera4;
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 	HRESULT InitDevice();

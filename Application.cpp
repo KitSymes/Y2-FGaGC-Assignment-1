@@ -110,7 +110,7 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	// Initialize the world matrix
 	XMStoreFloat4x4(&_world, XMMatrixIdentity());
 
-	// Initialize the view matrix
+	/*// Initialize the view matrix
 	XMVECTOR Eye = XMVectorSet(0.0f, 4.0f, -8.0f, 0.0f);
 	XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -118,7 +118,14 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(Eye, At, Up));
 
 	// Initialize the projection matrix
-	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _WindowWidth / (FLOAT)_WindowHeight, 0.01f, 100.0f));
+	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _WindowWidth / (FLOAT)_WindowHeight, 0.01f, 100.0f));*/
+	_camera1 = new Camera(Vector3(0.0f, 4.0f, -8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, true);
+	_camera2 = new Camera(Vector3(-8.0f, 4.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, true);
+	_camera3 = new Camera(Vector3(0.0f, 4.0f, 8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, false);
+	_camera4 = new Camera(Vector3(8.0f, 4.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, false);
+	_camera = _camera1;
+	_camera->SetView();
+	_camera->SetProjection();
 
 	// OBJ Init Stuff - The false at the end is "wether to flip the texture co-ords or not", false for Blender and not needed for 3DS Max
 	_sphereMeshData = OBJLoader::Load("sphere.obj", _pd3dDevice, false);
@@ -128,7 +135,7 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	_sun = new GameObject(_sunGeo, Vector3(), nullptr);
 
 	_planetGeo = new Geometry(&_cubeMeshData, _pTextureRV);
-	_planet1 = new OrbitGameObject(_sun, _planetGeo, (float)2/3, Vector3(4.0f, 0.0f, 0.0f), _sun);
+	_planet1 = new OrbitGameObject(_sun, _planetGeo, (float)2 / 3, Vector3(4.0f, 0.0f, 0.0f), _sun);
 	_planet1->_scale = Vector3(0.5f, 0.5f, 0.5f);
 
 	return S_OK;
@@ -632,7 +639,7 @@ HRESULT Application::InitDevice()
 
 	if (FAILED(hr))
 		return hr;
-	
+
 	_pImmediateContext->PSSetShaderResources(0, 1, &_pTextureRV);
 
 	// Create the sample state
@@ -679,6 +686,12 @@ void Application::Cleanup()
 	if (_pImmediateContext) _pImmediateContext->Release();
 	if (_pd3dDevice) _pd3dDevice->Release();
 
+	_camera = nullptr;
+	delete _camera1;
+	delete _camera2;
+	delete _camera3;
+	delete _camera4;
+
 	//if (_sun)
 	//	delete _sun;
 	//if (_sunGeo)
@@ -723,7 +736,7 @@ void Application::Update()
 	// Planet Spin Z * Planet Spin X * Planet Scale * Planet Move * Panet Orbit Y
 	XMStoreFloat4x4(&_planet1World, XMMatrixRotationZ(t) * XMMatrixRotationX(t) * // Spin around itself
 		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(4, 0, 0) * XMMatrixRotationY(t / 1.5f)); // Scale, Move then Orbit*/
-	// Planet2
+		// Planet2
 	XMStoreFloat4x4(&_planet2World, XMMatrixRotationZ(t) * XMMatrixRotationX(t) * // Spin around itself
 		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(7, 0, 0) * XMMatrixRotationY(t / 2.5f)); // Scale, Move then Orbit
 
@@ -749,6 +762,19 @@ void Application::Update()
 	_sun->Update(t);
 	_planet1->Update(t);
 
+	if (GetAsyncKeyState('1'))
+		_camera = _camera1;
+	else if (GetAsyncKeyState('2'))
+		_camera = _camera2;
+	else if (GetAsyncKeyState('3'))
+		_camera = _camera3;
+	else if (GetAsyncKeyState('4'))
+		_camera = _camera4;
+
+	_camera->SetView();
+	_camera->SetProjection();
+	_camera->Update();
+
 	_showWireFrame = GetAsyncKeyState(VK_LSHIFT);
 }
 
@@ -761,8 +787,8 @@ void Application::Draw()
 	_pImmediateContext->ClearRenderTargetView(_pRenderTargetView, ClearColor);
 
 	XMMATRIX world = XMLoadFloat4x4(&_world);
-	XMMATRIX view = XMLoadFloat4x4(&_view);
-	XMMATRIX projection = XMLoadFloat4x4(&_projection);
+	XMMATRIX view = XMLoadFloat4x4(_camera->GetView());
+	XMMATRIX projection = XMLoadFloat4x4(_camera->GetProjection());
 	//
 	// Update variables
 	//
@@ -806,7 +832,7 @@ void Application::Draw()
 	_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
-	
+
 
 	// Set to Sphere
 	//_pImmediateContext->IASetVertexBuffers(0, 1, &_sphereMeshData.VertexBuffer, &stride, &offset);

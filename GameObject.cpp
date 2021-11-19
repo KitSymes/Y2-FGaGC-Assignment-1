@@ -11,8 +11,7 @@ GameObject::GameObject(Geometry* mesh, Vector3 position, GameObject* parent)
 
 GameObject::~GameObject()
 {
-	delete _mesh;
-	_mesh = nullptr;
+
 }
 
 void GameObject::Update(float time)
@@ -26,6 +25,9 @@ void GameObject::Update(float time)
 
 void GameObject::Draw(ID3D11DeviceContext* _pImmediateContext, ConstantBuffer* cb, ID3D11Buffer* _pConstantBuffer)
 {
+	if (_mesh == nullptr)
+		return;
+
 	XMMATRIX world = XMLoadFloat4x4(&_world);
 	cb->mWorld = XMMatrixTranspose(world);
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, cb, 0, 0);
