@@ -91,6 +91,7 @@ private:
 	Camera* _camera3;
 	Camera* _camera4;
 	// W08
+	ID3D11BlendState* _transparency;
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 	HRESULT InitDevice();

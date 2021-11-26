@@ -666,12 +666,35 @@ HRESULT Application::InitDevice()
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	_pd3dDevice->CreateSamplerState(&sampDesc, &_pSamplerLinear);
+	hr = _pd3dDevice->CreateSamplerState(&sampDesc, &_pSamplerLinear);
 
 	if (FAILED(hr))
 		return hr;
 
 	_pImmediateContext->PSSetSamplers(0, 1, &_pSamplerLinear);
+
+	D3D11_BLEND_DESC blendDesc;
+	ZeroMemory(&blendDesc, sizeof(blendDesc));
+
+	D3D11_RENDER_TARGET_BLEND_DESC rtbd;
+	ZeroMemory(&rtbd, sizeof(rtbd));
+
+	rtbd.BlendEnable = true;
+	rtbd.SrcBlend = D3D11_BLEND_SRC_COLOR;
+	rtbd.DestBlend = D3D11_BLEND_BLEND_FACTOR;
+	rtbd.BlendOp = D3D11_BLEND_OP_ADD;
+	rtbd.SrcBlendAlpha = D3D11_BLEND_ONE;
+	rtbd.DestBlendAlpha = D3D11_BLEND_ZERO;
+	rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtbd.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
+
+	blendDesc.AlphaToCoverageEnable = false;
+	blendDesc.RenderTarget[0] = rtbd;
+
+	hr = _pd3dDevice->CreateBlendState(&blendDesc, &_transparency);
+
+	if (FAILED(hr))
+		return hr;
 
 	return S_OK;
 }
@@ -699,6 +722,34 @@ void Application::Cleanup()
 	if (_pSwapChain) _pSwapChain->Release();
 	if (_pImmediateContext) _pImmediateContext->Release();
 	if (_pd3dDevice) _pd3dDevice->Release();
+	// W06
+	delete _sunGeo;
+	_sunGeo = nullptr;
+	delete _planetGeo;
+	_planetGeo = nullptr;
+	delete _planeGeo;
+	_planeGeo = nullptr;
+	delete _sun;
+	_sun = nullptr;
+	delete _planet1;
+	_planet1 = nullptr;
+	delete _moon1;
+	_moon1 = nullptr;
+	delete _moon2;
+	_moon2 = nullptr;
+	if (_planeTexture) _planeTexture->Release();
+	// W07
+	delete _camera1;
+	delete _camera2;
+	delete _camera3;
+	delete _camera4;
+	_camera = nullptr;
+	_camera1 = nullptr;
+	_camera2 = nullptr;
+	_camera3 = nullptr;
+	_camera4 = nullptr;
+	// W08
+	if (_transparency) _transparency->Release();
 
 	_camera = nullptr;
 	delete _camera1;
@@ -850,12 +901,14 @@ void Application::Draw()
 	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
 
 
-	// Set to Sphere
-	//_pImmediateContext->IASetVertexBuffers(0, 1, &_sphereMeshData.VertexBuffer, &stride, &offset);
-	//_pImmediateContext->IASetIndexBuffer(_sphereMeshData.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-	// 
-	//_pImmediateContext->DrawIndexed(_sphereMeshData.IndexCount, 0, 0); // First parameter is the number of indecies in the index buffer
+	// "fine-tune" the blending equation
+	float blendFactor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
 
+	// Set the default blend state (no blending) for opaque objects
+	d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
+
+	// Render opaque objects //
+	
 	_sun->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 	_planet1->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 
@@ -863,11 +916,6 @@ void Application::Draw()
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_cubeMeshData.VertexBuffer, &stride, &offset);
 	_pImmediateContext->IASetIndexBuffer(_cubeMeshData.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
-	/*// First Planet
-	world = XMLoadFloat4x4(&_planet1World);
-	cb.mWorld = XMMatrixTranspose(world);
-	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-	_pImmediateContext->DrawIndexed(_cubeMeshData.IndexCount, 0, 0);*/
 
 	// Second Planet
 	world = XMLoadFloat4x4(&_planet2World);
@@ -875,18 +923,8 @@ void Application::Draw()
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 	_pImmediateContext->DrawIndexed(_cubeMeshData.IndexCount, 0, 0);
 
-	// First Moon
-	//world = XMLoadFloat4x4(&_moon1World);
-	//cb.mWorld = XMMatrixTranspose(world);
-	//_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-	//_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0);
 	_moon1->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 
-	// Second Moon
-	//world = XMLoadFloat4x4(&_moon2World);
-	//cb.mWorld = XMMatrixTranspose(world);
-	//_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-	//_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0);
 	_moon2->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 
 	// Set to Pyramid
@@ -916,8 +954,9 @@ void Application::Draw()
 			_pImmediateContext->DrawIndexed(6, 0, 0);
 		}
 
-	//
+	// Set the blend state for transparent objects
+	d3d11DevCon->OMSetBlendState(_transparency, blendFactor, 0xffffffff);
+
 	// Present our back buffer to our front buffer
-	//
 	_pSwapChain->Present(0, 0);
 }
