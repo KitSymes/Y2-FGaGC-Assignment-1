@@ -18,7 +18,7 @@ void Geometry::Draw(ID3D11DeviceContext* _pImmediateContext, ID3D11Buffer* _pCon
 	UINT offset = 0;
 
 	// Set Texture
-	//_pImmediateContext->PSSetShaderResources(0, 1, &_texture);
+	_pImmediateContext->PSSetShaderResources(0, 1, &_texture);
 
 	// Set Vertex Buffer
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_mesh->VertexBuffer, &stride, &offset);

@@ -130,13 +130,21 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	// OBJ Init Stuff - The false at the end is "wether to flip the texture co-ords or not", false for Blender and not needed for 3DS Max
 	_sphereMeshData = OBJLoader::Load("sphere.obj", _pd3dDevice, false);
 	_cubeMeshData = OBJLoader::Load("cube.obj", _pd3dDevice, false);
+	_planeMeshData = OBJLoader::Load("plane.obj", _pd3dDevice, false);
 
 	_sunGeo = new Geometry(&_sphereMeshData, _pTextureRV);
 	_sun = new GameObject(_sunGeo, Vector3(), nullptr);
 
 	_planetGeo = new Geometry(&_cubeMeshData, _pTextureRV);
-	_planet1 = new OrbitGameObject(_sun, _planetGeo, (float)2 / 3, Vector3(4.0f, 0.0f, 0.0f), _sun);
+	_planet1 = new OrbitGameObject(_planetGeo, (float)2 / 3, Vector3(4.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), _sun);
 	_planet1->_scale = Vector3(0.5f, 0.5f, 0.5f);
+
+	_planeGeo = new Geometry(&_planeMeshData, _planeTexture);
+	_moon1 = new OrbitGameObject(_planeGeo, 2, Vector3(0.0f, 1.0f, 0.0f), Vector3(-1.0f, 0.0f, 0.0f), _planet1);
+	_moon1->_scale = Vector3(0.05f, 0.05f, 0.05f);
+	_moon2 = new OrbitGameObject(_planeGeo, 2, Vector3(1.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 1.0f), _planet1);
+	_moon2->_scale = Vector3(0.05f, 0.05f, 0.05f);
+	_moon2->_rotation = Vector3(90.0f, 90.0f, 0.0f);
 
 	return S_OK;
 }
@@ -642,6 +650,12 @@ HRESULT Application::InitDevice()
 
 	_pImmediateContext->PSSetShaderResources(0, 1, &_pTextureRV);
 
+
+	hr = CreateDDSTextureFromFile(_pd3dDevice, L"Plane_COLOR.dds", nullptr, &_planeTexture);
+
+	if (FAILED(hr))
+		return hr;
+
 	// Create the sample state
 	D3D11_SAMPLER_DESC sampDesc;
 	ZeroMemory(&sampDesc, sizeof(sampDesc));
@@ -741,10 +755,10 @@ void Application::Update()
 		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(7, 0, 0) * XMMatrixRotationY(t / 2.5f)); // Scale, Move then Orbit
 
 	// Moon 1
-	XMStoreFloat4x4(&_moon1World, XMMatrixRotationZ(t * 1.5f) * XMMatrixRotationX(t * 1.5f) * // Spin around itself
+	/*XMStoreFloat4x4(&_moon1World, XMMatrixRotationZ(t * 1.5f) * XMMatrixRotationX(t * 1.5f) * // Spin around itself
 		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(0, 4, 0) * XMMatrixRotationX(t * 2) *
-		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(4, 0, 0) * XMMatrixRotationY(t / 1.5f)); // Planet 1 Transformations
-	// Moon 2
+		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(4, 0, 0) * XMMatrixRotationY(t / 1.5f)); // Planet 1 Transformations*/
+		// Moon 2
 	XMStoreFloat4x4(&_moon2World, XMMatrixRotationZ(t * 1.5f) * XMMatrixRotationX(t * 1.5f) * // Spin around itself
 		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(0, 3, 0) * XMMatrixRotationZ(t * 2.5f) *
 		XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(4, 0, 0) * XMMatrixRotationY(t / 1.5f)); // Planet 1 Transformations
@@ -761,6 +775,8 @@ void Application::Update()
 
 	_sun->Update(t);
 	_planet1->Update(t);
+	_moon1->Update(t);
+	_moon2->Update(t);
 
 	if (GetAsyncKeyState('1'))
 		_camera = _camera1;
@@ -859,21 +875,23 @@ void Application::Draw()
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 	_pImmediateContext->DrawIndexed(_cubeMeshData.IndexCount, 0, 0);
 
+	// First Moon
+	//world = XMLoadFloat4x4(&_moon1World);
+	//cb.mWorld = XMMatrixTranspose(world);
+	//_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+	//_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0);
+	_moon1->Draw(_pImmediateContext, &cb, _pConstantBuffer);
+
+	// Second Moon
+	//world = XMLoadFloat4x4(&_moon2World);
+	//cb.mWorld = XMMatrixTranspose(world);
+	//_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+	//_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0);
+	_moon2->Draw(_pImmediateContext, &cb, _pConstantBuffer);
+
 	// Set to Pyramid
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);
 	_pImmediateContext->IASetIndexBuffer(_pPyramidIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-
-	// First Moon
-	world = XMLoadFloat4x4(&_moon1World);
-	cb.mWorld = XMMatrixTranspose(world);
-	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-	_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0);
-
-	// Second Moon
-	world = XMLoadFloat4x4(&_moon2World);
-	cb.mWorld = XMMatrixTranspose(world);
-	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-	_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0);
 
 	// Asteroid Belt
 	for (int i = 0; i < 100; i++)

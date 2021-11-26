@@ -45,7 +45,9 @@ private:
 	ID3D11RasterizerState* _solidFrame;
 	// W02 Planet Positions
 	//XMFLOAT4X4 _planet1World;
-	XMFLOAT4X4 _planet2World, _moon1World, _moon2World;
+	XMFLOAT4X4 _planet2World;
+	//XMFLOAT4X4 _moon1World;
+	XMFLOAT4X4 _moon2World;
 	Vector3					_meteorsOffsets[100];
 	XMFLOAT4X4				_meteorsWorlds[100];
 	// W03
@@ -73,16 +75,22 @@ private:
 	// W06
 	MeshData _sphereMeshData;
 	MeshData _cubeMeshData;
+	MeshData _planeMeshData;
 	Geometry* _sunGeo;
-	GameObject* _sun;
 	Geometry* _planetGeo;
+	Geometry* _planeGeo;
+	GameObject* _sun;
 	GameObject* _planet1;
+	GameObject* _moon1;
+	GameObject* _moon2;
+	ID3D11ShaderResourceView* _planeTexture = nullptr;
 	// W07
 	Camera* _camera;
 	Camera* _camera1;
 	Camera* _camera2;
 	Camera* _camera3;
 	Camera* _camera4;
+	// W08
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 	HRESULT InitDevice();

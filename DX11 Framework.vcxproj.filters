@@ -53,5 +53,6 @@
     <Image Include="Crate_COLOR.dds" />
     <Image Include="Crate_NRM.dds" />
     <Image Include="Crate_SPEC.dds" />
+    <Image Include="Plane_COLOR.dds" />
   </ItemGroup>
 </Project>

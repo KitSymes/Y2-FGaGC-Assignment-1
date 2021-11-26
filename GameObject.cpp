@@ -37,5 +37,8 @@ void GameObject::Draw(ID3D11DeviceContext* _pImmediateContext, ConstantBuffer* c
 
 Vector3 GameObject::GetOffset()
 {
-	return _position + (_parent != nullptr ? _parent->GetOffset() : Vector3());
+	Vector3 offset = _position;
+	if (_parent != nullptr)
+		offset += _parent->GetOffset();
+	return offset;
 }
