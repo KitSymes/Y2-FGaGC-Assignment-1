@@ -856,6 +856,7 @@ void Application::Draw()
 	XMMATRIX world = XMLoadFloat4x4(&_world);
 	XMMATRIX view = XMLoadFloat4x4(_camera->GetView());
 	XMMATRIX projection = XMLoadFloat4x4(_camera->GetProjection());
+
 	//
 	// Update variables
 	//
@@ -872,24 +873,14 @@ void Application::Draw()
 	cb.SpecularLight = specularLight;
 	cb.SpecularPower = specularPower;
 	cb.EyePosW = EyePosW;
-	//cb.mTime = _time;
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-
-	// Set to wire frame (for default pass nullptr)
-	//_pImmediateContext->RSSetState(_wireFrame);
-	//_pImmediateContext->RSSetState(_solidFrame);
-
-	//
-	// Renders a triangle
-	//
 
 	if (_showWireFrame)
 		_pImmediateContext->RSSetState(_wireFrame);
 	else
 		_pImmediateContext->RSSetState(_solidFrame);
 
-	//int cubeIndexCount = 6 * 6;
 	int pyramidIndexCount = 3 * 6;
 
 	UINT stride = sizeof(SimpleVertex);
@@ -905,17 +896,16 @@ void Application::Draw()
 	float blendFactor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
 
 	// Set the default blend state (no blending) for opaque objects
-	d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
+	_pImmediateContext->OMSetBlendState(0, 0, 0xffffffff);
 
-	// Render opaque objects //
-	
+	// Render Opaque Objects //
+
 	_sun->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 	_planet1->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 
 	// Set to Cube
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_cubeMeshData.VertexBuffer, &stride, &offset);
 	_pImmediateContext->IASetIndexBuffer(_cubeMeshData.IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-
 
 	// Second Planet
 	world = XMLoadFloat4x4(&_planet2World);
@@ -924,21 +914,7 @@ void Application::Draw()
 	_pImmediateContext->DrawIndexed(_cubeMeshData.IndexCount, 0, 0);
 
 	_moon1->Draw(_pImmediateContext, &cb, _pConstantBuffer);
-
 	_moon2->Draw(_pImmediateContext, &cb, _pConstantBuffer);
-
-	// Set to Pyramid
-	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);
-	_pImmediateContext->IASetIndexBuffer(_pPyramidIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-
-	// Asteroid Belt
-	for (int i = 0; i < 100; i++)
-	{
-		world = XMLoadFloat4x4(&_meteorsWorlds[i]);
-		cb.mWorld = XMMatrixTranspose(world);
-		_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-		_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0);
-	}
 
 	// Set to Grid
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_pGridVertexBuffer, &stride, &offset);
@@ -955,7 +931,22 @@ void Application::Draw()
 		}
 
 	// Set the blend state for transparent objects
-	d3d11DevCon->OMSetBlendState(_transparency, blendFactor, 0xffffffff);
+	_pImmediateContext->OMSetBlendState(_transparency, blendFactor, 0xffffffff);
+
+	// Render Transparent Objects //
+
+	// Set to Pyramid
+	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);
+	_pImmediateContext->IASetIndexBuffer(_pPyramidIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+
+	// Asteroid Belt
+	for (int i = 0; i < 100; i++)
+	{
+		world = XMLoadFloat4x4(&_meteorsWorlds[i]);
+		cb.mWorld = XMMatrixTranspose(world);
+		_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+		_pImmediateContext->DrawIndexed(pyramidIndexCount, 0, 0);
+	}
 
 	// Present our back buffer to our front buffer
 	_pSwapChain->Present(0, 0);
