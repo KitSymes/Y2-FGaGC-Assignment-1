@@ -15,6 +15,8 @@ private:
 	Vector3 _eye;
 	Vector3 _at;
 	Vector3 _up;
+	Vector3 _direction;
+	float _rotationYaw;
 
 	FLOAT _windowWidth;
 	FLOAT _windowHeight;
