@@ -35,15 +35,11 @@ void Camera::Update()
 	{
 		if (GetAsyncKeyState('Q'))
 		{
-			_rotationYaw += 0.001f;
-			_direction.x = 1 * cos(_rotationYaw) - 0 * sin(_rotationYaw);
-			_direction.z = 1 * sin(_rotationYaw) - 0 * cos(_rotationYaw);
+			SetYaw(_rotationYaw + 0.001f);
 		}
 		if (GetAsyncKeyState('E'))
 		{
-			_rotationYaw -= 0.001f;
-			_direction.x = 1 * cos(_rotationYaw) - 0 * sin(_rotationYaw);
-			_direction.z = 1 * sin(_rotationYaw) - 0 * cos(_rotationYaw);
+			SetYaw(_rotationYaw - 0.001f);
 		}
 		//DBOUT("" << _direction.x << " " << _direction.z << std::endl);
 
@@ -55,6 +51,10 @@ void Camera::Update()
 			_eye += _direction.CrossProduct(_up) * 0.001f;
 		if (GetAsyncKeyState('D'))
 			_eye -= _direction.CrossProduct(_up) * 0.001f;
+		if (GetAsyncKeyState(VK_SPACE))
+			_eye.y += 0.001;
+		if (GetAsyncKeyState(VK_LCONTROL))
+			_eye.y -= 0.001;
 
 	}
 }
@@ -116,6 +116,13 @@ XMFLOAT4X4* Camera::GetProjection()
 void Camera::SetProjection()
 {
 	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _windowWidth / (FLOAT)_windowHeight, 0.01f, 100.0f));
+}
+
+void Camera::SetYaw(float yaw)
+{
+	_rotationYaw = yaw;
+	_direction.x = 1 * cos(_rotationYaw) - 0 * sin(_rotationYaw);
+	_direction.z = 1 * sin(_rotationYaw) - 0 * cos(_rotationYaw);
 }
 
 void Camera::Reshape(FLOAT windowWidth, FLOAT windowHeight, FLOAT nearPlane, FLOAT farPlane, bool lookTo)

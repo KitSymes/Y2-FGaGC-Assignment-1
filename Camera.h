@@ -45,6 +45,12 @@ public:
 	XMFLOAT4X4* GetProjection();
 	void SetProjection();
 
+	/// <summary>
+	/// Set the Camera's Yaw Rotation in radians
+	/// </summary>
+	/// <param name="yaw">The Yaw value in radians</param>
+	void SetYaw(float yaw);
+
 	void Reshape(FLOAT windowWidth, FLOAT windowHeight, FLOAT nearPlane, FLOAT farPlane, bool lookTo);
 };
 #endif

@@ -41,8 +41,6 @@ Application::Application()
 	_pIndexBuffer = nullptr;*/
 	_pPyramidVertexBuffer = nullptr;
 	_pPyramidIndexBuffer = nullptr;
-	_pGridVertexBuffer = nullptr;
-	_pGridIndexBuffer = nullptr;
 	_pConstantBuffer = nullptr;
 }
 
@@ -120,6 +118,7 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	// Initialize the projection matrix
 	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _WindowWidth / (FLOAT)_WindowHeight, 0.01f, 100.0f));*/
 	_camera1 = new Camera(Vector3(0.0f, 4.0f, -8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, true);
+	_camera1->SetYaw(1.57079633f);
 	//_camera1 = new Camera(Vector3(0.0f, 1.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, true);
 	_camera2 = new Camera(Vector3(-8.0f, 4.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, false);
 	_camera3 = new Camera(Vector3(0.0f, 4.0f, 8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, false);
@@ -133,10 +132,10 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	_cubeMeshData = OBJLoader::Load("cube.obj", _pd3dDevice, false);
 	_planeMeshData = OBJLoader::Load("plane.obj", _pd3dDevice, false);
 
-	_sunGeo = new Geometry(&_sphereMeshData, _pTextureRV);
+	_sunGeo = new Geometry(&_sphereMeshData, _crateTexture);
 	_sun = new GameObject(_sunGeo, Vector3(), nullptr);
 
-	_planetGeo = new Geometry(&_cubeMeshData, _pTextureRV);
+	_planetGeo = new Geometry(&_cubeMeshData, _crateTexture);
 	_planet1 = new OrbitGameObject(_planetGeo, (float)2 / 3, Vector3(4.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), _sun);
 	_planet1->_scale = Vector3(0.5f, 0.5f, 0.5f);
 
@@ -266,7 +265,7 @@ HRESULT Application::InitVertexBuffer()
 		D3D11_BUFFER_DESC bd;
 		ZeroMemory(&bd, sizeof(bd));
 		bd.Usage = D3D11_USAGE_DEFAULT;
-		bd.ByteWidth = sizeof(SimpleVertex) * 8;
+		bd.ByteWidth = sizeof(SimpleVertex) * 5;
 		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		bd.CPUAccessFlags = 0;
 
@@ -275,69 +274,6 @@ HRESULT Application::InitVertexBuffer()
 		InitData.pSysMem = vertices;
 
 		hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pPyramidVertexBuffer);
-
-		if (FAILED(hr))
-			return hr;
-	}
-
-	return S_OK;
-}
-
-HRESULT Application::GenerateGrid(int width, int height)
-{
-	HRESULT hr;
-
-	_gridWidth = width;
-	_gridHeight = height;
-
-	// Vertex Buffer
-	{
-		SimpleVertex vertices[] =
-		{
-			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f),	XMFLOAT2(0.0f, 0.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, -1.0f),  XMFLOAT3(0.0f, 1.0f, 0.0f),	XMFLOAT2(0.0f, 1.0f) },
-			{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f),		XMFLOAT2(1.0f, 0.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT3(0.0f, 1.0f, 0.0f),		XMFLOAT2(1.0f, 1.0f) },
-		};
-
-		D3D11_BUFFER_DESC bd;
-		ZeroMemory(&bd, sizeof(bd));
-		bd.Usage = D3D11_USAGE_DEFAULT;
-		bd.ByteWidth = sizeof(SimpleVertex) * 8;
-		bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		bd.CPUAccessFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA InitData;
-		ZeroMemory(&InitData, sizeof(InitData));
-		InitData.pSysMem = vertices;
-
-		hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pGridVertexBuffer);
-
-		if (FAILED(hr))
-			return hr;
-	}
-
-	// Index Buffer
-	{
-		WORD indices[] =
-		{
-			// Bottom Face
-			0,2,1,
-			1,2,3,
-		};
-
-		D3D11_BUFFER_DESC bd;
-		ZeroMemory(&bd, sizeof(bd));
-
-		bd.Usage = D3D11_USAGE_DEFAULT;
-		bd.ByteWidth = sizeof(WORD) * 2 * 3;
-		bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		bd.CPUAccessFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA InitData;
-		ZeroMemory(&InitData, sizeof(InitData));
-		InitData.pSysMem = indices;
-		hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pGridIndexBuffer);
 
 		if (FAILED(hr))
 			return hr;
@@ -602,7 +538,8 @@ HRESULT Application::InitDevice()
 
 	InitIndexBuffer();
 
-	GenerateGrid(6, 6);
+	_terrain = new Terrain();
+	_terrain->GenerateGrid(6, 6, _pd3dDevice);
 
 	/*// Set vertex buffer
 	UINT stride = sizeof(SimpleVertex);
@@ -644,12 +581,12 @@ HRESULT Application::InitDevice()
 	if (FAILED(hr))
 		return hr;
 
-	hr = CreateDDSTextureFromFile(_pd3dDevice, L"Crate_COLOR.dds", nullptr, &_pTextureRV);
+	hr = CreateDDSTextureFromFile(_pd3dDevice, L"Crate_COLOR.dds", nullptr, &_crateTexture);
 
 	if (FAILED(hr))
 		return hr;
 
-	_pImmediateContext->PSSetShaderResources(0, 1, &_pTextureRV);
+	_pImmediateContext->PSSetShaderResources(0, 1, &_crateTexture);
 
 
 	hr = CreateDDSTextureFromFile(_pd3dDevice, L"Plane_COLOR.dds", nullptr, &_planeTexture);
@@ -714,8 +651,8 @@ void Application::Cleanup()
 	//if (_pIndexBuffer) _pIndexBuffer->Release();
 	if (_pPyramidVertexBuffer) _pPyramidVertexBuffer->Release();
 	if (_pPyramidIndexBuffer) _pPyramidIndexBuffer->Release();
-	if (_pGridVertexBuffer) _pGridVertexBuffer->Release();
-	if (_pGridIndexBuffer) _pGridIndexBuffer->Release();
+	delete _terrain;
+	_terrain = nullptr;
 	if (_pVertexLayout) _pVertexLayout->Release();
 	if (_pVertexShader) _pVertexShader->Release();
 	if (_pPixelShader) _pPixelShader->Release();
@@ -823,7 +760,7 @@ void Application::Update()
 			XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(7, 0, 0) * XMMatrixRotationY(t / 2.5f)); // Planet 2 Transformations
 	}
 
-	XMStoreFloat4x4(&_gridWorld, XMMatrixTranslation(0.5f, -2.0f, 0.0f));
+	_terrain->Update();
 
 	_sun->Update(t);
 	_planet1->Update(t);
@@ -917,21 +854,12 @@ void Application::Draw()
 
 	_moon1->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 	_moon2->Draw(_pImmediateContext, &cb, _pConstantBuffer);
-
-	// Set to Grid
-	_pImmediateContext->IASetVertexBuffers(0, 1, &_pGridVertexBuffer, &stride, &offset);
-	_pImmediateContext->IASetIndexBuffer(_pGridIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-
-	// Grid
-	world = XMLoadFloat4x4(&_gridWorld);
-	for (int w = 0; w < _gridWidth; w++)
-		for (int h = 0; h < _gridHeight; h++)
-		{
-			cb.mWorld = XMMatrixTranspose(world * XMMatrixTranslation((w - (_gridWidth / 2)) * 2, 0.0f, (h - (_gridHeight / 2)) * 2));
-			_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-			_pImmediateContext->DrawIndexed(6, 0, 0);
-		}
-
+	
+	_pImmediateContext->PSSetShaderResources(0, 1, &_crateTexture);
+	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);
+	_pImmediateContext->IASetIndexBuffer(_pPyramidIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	_terrain->Draw(_pImmediateContext, &cb, _pConstantBuffer);
+	
 	// Set the blend state for transparent objects
 	_pImmediateContext->OMSetBlendState(_transparency, blendFactor, 0xffffffff);
 

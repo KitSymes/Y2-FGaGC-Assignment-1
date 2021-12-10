@@ -389,6 +389,7 @@
     <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="OBJLoader.cpp" />
     <ClCompile Include="OrbitGameObject.cpp" />
+    <ClCompile Include="Terrain.cpp" />
     <ClCompile Include="Vector3.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -405,6 +406,7 @@
     <ClInclude Include="OrbitGameObject.h" />
     <CLInclude Include="resource.h" />
     <ClInclude Include="Structures.h" />
+    <ClInclude Include="Terrain.h" />
     <ClInclude Include="Vector3.h" />
     <ResourceCompile Include="DX11 Framework.rc" />
   </ItemGroup>

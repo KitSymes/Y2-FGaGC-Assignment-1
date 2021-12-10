@@ -21,6 +21,7 @@
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="OrbitGameObject.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Terrain.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -33,6 +34,7 @@
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="OrbitGameObject.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">

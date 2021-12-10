@@ -13,6 +13,7 @@
 #include "GameObject.h"
 #include "OrbitGameObject.h"
 #include "Camera.h"
+#include "Terrain.h"
 
 using namespace DirectX;
 
@@ -30,12 +31,8 @@ private:
 	ID3D11VertexShader*     _pVertexShader;
 	ID3D11PixelShader*      _pPixelShader;
 	ID3D11InputLayout*      _pVertexLayout;
-	//ID3D11Buffer*           _pVertexBuffer;
-	//ID3D11Buffer*           _pIndexBuffer;
 	ID3D11Buffer*           _pConstantBuffer;
 	XMFLOAT4X4              _world;
-	//XMFLOAT4X4              _view;
-	//XMFLOAT4X4              _projection;
 	// W02 Depth/Stencil Buffer
 	ID3D11DepthStencilView* _depthStencilView;
 	ID3D11Texture2D* _depthStencilBuffer;
@@ -44,22 +41,15 @@ private:
 	ID3D11RasterizerState* _wireFrame;
 	ID3D11RasterizerState* _solidFrame;
 	// W02 Planet Positions
-	//XMFLOAT4X4 _planet1World;
 	XMFLOAT4X4 _planet2World;
-	//XMFLOAT4X4 _moon1World;
 	XMFLOAT4X4 _moon2World;
 	Vector3					_meteorsOffsets[100];
 	XMFLOAT4X4				_meteorsWorlds[100];
-	// W03
+	// W03 Shader Pipeline
 	float _time;
 	ID3D11Buffer* _pPyramidVertexBuffer;
 	ID3D11Buffer* _pPyramidIndexBuffer;
-	ID3D11Buffer* _pGridVertexBuffer;
-	ID3D11Buffer* _pGridIndexBuffer;
-	XMFLOAT4X4 _gridWorld;
-	int _gridWidth, _gridHeight;
-	HRESULT GenerateGrid(int width, int height);
-	// W04
+	// W04 Lighting
 	XMFLOAT3 lightDirection;
 	XMFLOAT4 diffuseMaterial;
 	XMFLOAT4 diffuseLight;
@@ -69,10 +59,10 @@ private:
 	XMFLOAT4 specularLight;
 	float specularPower;
 	XMFLOAT3 EyePosW;
-	// W05
-	ID3D11ShaderResourceView* _pTextureRV = nullptr;
+	// W05 Post Processing
+	ID3D11ShaderResourceView* _crateTexture = nullptr;
 	ID3D11SamplerState* _pSamplerLinear = nullptr;
-	// W06
+	// W06 Game Architecture
 	MeshData _sphereMeshData;
 	MeshData _cubeMeshData;
 	MeshData _planeMeshData;
@@ -84,14 +74,16 @@ private:
 	GameObject* _moon1;
 	GameObject* _moon2;
 	ID3D11ShaderResourceView* _planeTexture = nullptr;
-	// W07
+	// W07 Camera Control
 	Camera* _camera;
 	Camera* _camera1;
 	Camera* _camera2;
 	Camera* _camera3;
 	Camera* _camera4;
-	// W08
+	// W08 Transparency
 	ID3D11BlendState* _transparency;
+	// W10 Terrain
+	Terrain* _terrain;
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 	HRESULT InitDevice();
