@@ -18,7 +18,7 @@ private:
 	int _heightmapWidth, _heightmapHeight;
 	float _heightScale;
 	std::string _heightmapFilename;
-	std::vector<unsigned char> _heightmap;
+	std::vector<float> _heightmap;
 	int _indexCount;
 public:
 	Terrain();

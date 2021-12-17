@@ -117,12 +117,12 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 
 	// Initialize the projection matrix
 	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _WindowWidth / (FLOAT)_WindowHeight, 0.01f, 100.0f));*/
-	_camera1 = new Camera(Vector3(0.0f, 4.0f, -8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, true);
+	_camera1 = new Camera(Vector3(0.0f, 4.0f, -8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, true);
 	_camera1->SetYaw(1.57079633f);
 	//_camera1 = new Camera(Vector3(0.0f, 1.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, true);
-	_camera2 = new Camera(Vector3(-8.0f, 4.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, false);
-	_camera3 = new Camera(Vector3(0.0f, 4.0f, 8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, false);
-	_camera4 = new Camera(Vector3(8.0f, 4.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, false);
+	_camera2 = new Camera(Vector3(-8.0f, 4.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
+	_camera3 = new Camera(Vector3(0.0f, 4.0f, 8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
+	_camera4 = new Camera(Vector3(8.0f, 4.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
 	_camera = _camera1;
 	_camera->SetView();
 	_camera->SetProjection();
@@ -539,7 +539,7 @@ HRESULT Application::InitDevice()
 	InitIndexBuffer();
 
 	_terrain = new Terrain();
-	_terrain->GenerateGrid(6, 6, _pd3dDevice);
+	_terrain->GenerateGrid(99, 99, _pd3dDevice);
 
 	/*// Set vertex buffer
 	UINT stride = sizeof(SimpleVertex);

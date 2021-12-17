@@ -2,7 +2,7 @@
 
 Terrain::Terrain()
 {
-	_heightScale = 1.0f;
+	_heightScale = 10.0f;
 }
 
 Terrain::~Terrain()
@@ -20,6 +20,9 @@ HRESULT Terrain::GenerateGrid(int width, int height, ID3D11Device* pd3dDevice)
 	_gridWidth = width;
 	_gridHeight = height;
 
+	_heightmapFilename = "TerrainAssets/minimap.raw";
+	LoadHeightmap();
+
 	// Vertex Buffer
 	{
 		SimpleVertex* finalMesh = new SimpleVertex[(width + 1) * (height + 1)];
@@ -27,7 +30,12 @@ HRESULT Terrain::GenerateGrid(int width, int height, ID3D11Device* pd3dDevice)
 		for (int h = 0; h < (height + 1); h++)
 			for (int w = 0; w < (width + 1); w++)
 			{
-				finalMesh[w + (h * (height + 1))] = { XMFLOAT3(w - (_gridWidth / 2.0f), 0.0f, h - (_gridHeight / 2.0f)), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2((w / (_gridWidth)), (h / (_gridHeight))) };
+				int index = w + (h * (height + 1));
+				finalMesh[w + (h * (height + 1))] = { XMFLOAT3(
+					w - (_gridWidth / 2.0f),
+					_heightmap[index],
+					h - (_gridHeight / 2.0f)
+				), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2((w / (_gridWidth)), (h / (_gridHeight))) };
 			}
 
 		D3D11_BUFFER_DESC bd;
@@ -94,10 +102,8 @@ HRESULT Terrain::GenerateGrid(int width, int height, ID3D11Device* pd3dDevice)
 
 void Terrain::LoadHeightmap()
 {
-	_heightmapWidth = _gridWidth;
-	_heightmapHeight = _gridHeight;
-	_heightmap.clear();
-	_heightmap.resize(_heightmapWidth * _heightmapHeight);
+	_heightmapWidth = _gridWidth + 1;
+	_heightmapHeight = _gridHeight + 1;
 
 	// A height for each vertex
 	std::vector<unsigned char> in(_heightmapWidth * _heightmapHeight);
@@ -115,7 +121,8 @@ void Terrain::LoadHeightmap()
 		inFile.close();
 	}
 
-	// Copy the array data into a float array and scale it. mHeightmap.resize(heightmapHeight * heightmapWidth, 0);
+	// Copy the array data into a float array and scale it.
+	_heightmap.resize(_heightmapHeight * _heightmapWidth, 0);
 	for (UINT i = 0; i < _heightmapHeight * _heightmapWidth; ++i)
 		_heightmap[i] = (in[i] / 255.0f) * _heightScale;
 }
