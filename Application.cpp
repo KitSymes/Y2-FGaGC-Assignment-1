@@ -108,7 +108,8 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	// Initialize the world matrix
 	XMStoreFloat4x4(&_world, XMMatrixIdentity());
 
-	/*// Initialize the view matrix
+	/* Hard Coded Camera
+	// Initialize the view matrix
 	XMVECTOR Eye = XMVectorSet(0.0f, 4.0f, -8.0f, 0.0f);
 	XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -117,21 +118,27 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 
 	// Initialize the projection matrix
 	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _WindowWidth / (FLOAT)_WindowHeight, 0.01f, 100.0f));*/
-	_camera1 = new Camera(Vector3(0.0f, 4.0f, -8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, true);
+
+	// I2 First Person Camera linked to TODO
+	_camera1 = new Camera(Vector3(0.0f, 10.0f, -8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, true);
 	_camera1->SetYaw(1.57079633f);
-	//_camera1 = new Camera(Vector3(0.0f, 1.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 100.0f, true);
-	_camera2 = new Camera(Vector3(-8.0f, 4.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
-	_camera3 = new Camera(Vector3(0.0f, 4.0f, 8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
-	_camera4 = new Camera(Vector3(8.0f, 4.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
+	// H1 Static cameras
+	_camera2 = new Camera(Vector3(-50.0f, 15.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
+	_camera3 = new Camera(Vector3(0.0f, 15.0f, 50.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
+	//_camera4 = new Camera(Vector3(50.0f, 15.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
+	// H2 Top Down TODO set Pitch
+	_camera4 = new Camera(Vector3(0.0f, 100.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
 	_camera = _camera1;
 	_camera->SetView();
 	_camera->SetProjection();
 
 	// OBJ Init Stuff - The false at the end is "wether to flip the texture co-ords or not", false for Blender and not needed for 3DS Max
+	// B2 + B3 Load in .obj and stored in a OO structure (MeshData which is used in Geometry which is used in GameObject, that handle different parts of the draw phase)
 	_sphereMeshData = OBJLoader::Load("sphere.obj", _pd3dDevice, false);
 	_cubeMeshData = OBJLoader::Load("cube.obj", _pd3dDevice, false);
 	_planeMeshData = OBJLoader::Load("plane.obj", _pd3dDevice, false);
 
+	// F1 Texture mapping, gets passed through to Geometry who's draw function maps the texture. Also seen in Application#Draw for hardcoded objects.
 	_sunGeo = new Geometry(&_sphereMeshData, _crateTexture);
 	_sun = new GameObject(_sunGeo, Vector3(), nullptr);
 
@@ -215,6 +222,7 @@ HRESULT Application::InitShadersAndInputLayout()
 	return hr;
 }
 
+// B1 Hard coded vertex buffer
 HRESULT Application::InitVertexBuffer()
 {
 	HRESULT hr;
@@ -282,6 +290,7 @@ HRESULT Application::InitVertexBuffer()
 	return S_OK;
 }
 
+// B1 Hard coded index buffer
 HRESULT Application::InitIndexBuffer()
 {
 	HRESULT hr;
@@ -711,6 +720,7 @@ void Application::Update()
 	static float t = 0.0f;
 	_time = t;
 
+	// C4 Depth Buffering
 	_pImmediateContext->ClearDepthStencilView(_depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	if (_driverType == D3D_DRIVER_TYPE_REFERENCE)
@@ -784,6 +794,7 @@ void Application::Update()
 	_showWireFrame = GetAsyncKeyState(VK_LSHIFT);
 }
 
+// C1 + C2 (Basic plane became the Terrain class, that loads in with a heightmap. That should cover it, otherwise replace minimap.dds with a pure black 100x100 1 channel .raw file)
 void Application::Draw()
 {
 	//
@@ -816,7 +827,7 @@ void Application::Draw()
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
 	if (_showWireFrame)
-		_pImmediateContext->RSSetState(_wireFrame);
+		_pImmediateContext->RSSetState(_wireFrame); // C3 Wireframe
 	else
 		_pImmediateContext->RSSetState(_solidFrame);
 
@@ -829,7 +840,6 @@ void Application::Draw()
 	_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetConstantBuffers(0, 1, &_pConstantBuffer);
 	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
-
 
 	// "fine-tune" the blending equation
 	float blendFactor[] = { 0.75f, 0.75f, 0.75f, 1.0f };

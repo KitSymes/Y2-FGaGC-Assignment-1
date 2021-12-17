@@ -31,6 +31,7 @@ Camera::~Camera()
 
 void Camera::Update()
 {
+	// E1 + E2 Camera 1 is a _lookTo camera, meaning it can roatate and move based on its rotation
 	if (_lookTo)
 	{
 		if (GetAsyncKeyState('Q'))

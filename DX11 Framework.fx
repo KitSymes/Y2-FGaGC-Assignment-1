@@ -38,6 +38,7 @@ struct VS_OUTPUT
 
 //------------------------------------------------------------------------------------
 // Vertex Shader - Implements Gouraud Shading using Diffuse lighting only
+// D1 Per Vertex
 //------------------------------------------------------------------------------------
 
 VS_OUTPUT VS(float4 Pos : POSITION, float3 NormalL : NORMAL, float2 Tex : TEXCOORD0)
@@ -70,6 +71,7 @@ VS_OUTPUT VS(float4 Pos : POSITION, float3 NormalL : NORMAL, float2 Tex : TEXCOO
 
 //--------------------------------------------------------------------------------------
 // Pixel Shader
+// D2 Per Pixel + D3 Ambient, Diffuse and Ambient
 //--------------------------------------------------------------------------------------
 float4 PS( VS_OUTPUT input ) : SV_Target
 {
@@ -88,6 +90,7 @@ float4 PS( VS_OUTPUT input ) : SV_Target
     float3 diffuse = diffuseAmount * (DiffuseMtrl * DiffuseLight).rgb;
     float3 ambient = (AmbientMtrl * AmbientLight).rgb;
     
+    // F2 Texture combines with lighting and shading calculations
     float4 textureColour = txDiffuse.Sample(samLinear, input.Tex);
     
     // Calculate Lighting
