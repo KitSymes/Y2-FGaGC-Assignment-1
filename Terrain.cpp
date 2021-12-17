@@ -23,6 +23,49 @@ HRESULT Terrain::GenerateGrid(int width, int height, ID3D11Device* pd3dDevice)
 	_heightmapFilename = "TerrainAssets/minimap.raw";
 	LoadHeightmap();
 
+	WORD* finalIndexes;
+	// Index Buffer
+	{
+		_indexCount = width * height * 2 * 3; // width * height squares, * 2 for each triangle, * 3 for each vertex
+		finalIndexes = new WORD[_indexCount];
+		for (int i = 0; i < _indexCount; i++)
+			finalIndexes[i] = 0;
+		int i = 0;
+		for (int h = 0; h < height; h++)
+			for (int w = 0; w < width; w++)
+			{
+				finalIndexes[i] = w + (h * (height + 1)); // Current Vertex
+				i++;
+				finalIndexes[i] = w + ((h + 1) * (height + 1)); // Vertex above
+				i++;
+				finalIndexes[i] = w + 1 + (h * (height + 1)); // Vertex to the right
+				i++;
+
+				finalIndexes[i] = w + ((h + 1) * (height + 1)); // Vertex above
+				i++;
+				finalIndexes[i] = w + 1 + ((h + 1) * (height + 1)); // Vertex diagonal
+				i++;
+				finalIndexes[i] = w + 1 + (h * (height + 1)); // Vertex to the right
+				i++;
+			}
+
+		D3D11_BUFFER_DESC bd;
+		ZeroMemory(&bd, sizeof(bd));
+
+		bd.Usage = D3D11_USAGE_DEFAULT;
+		bd.ByteWidth = sizeof(WORD) * _indexCount;
+		bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		bd.CPUAccessFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA InitData;
+		ZeroMemory(&InitData, sizeof(InitData));
+		InitData.pSysMem = finalIndexes;
+		hr = pd3dDevice->CreateBuffer(&bd, &InitData, &_pGridIndexBuffer);
+
+		if (FAILED(hr))
+			return hr;
+	}
+
 	// Vertex Buffer
 	{
 		SimpleVertex* finalMesh = new SimpleVertex[(width + 1) * (height + 1)];
@@ -31,12 +74,55 @@ HRESULT Terrain::GenerateGrid(int width, int height, ID3D11Device* pd3dDevice)
 			for (int w = 0; w < (width + 1); w++)
 			{
 				int index = w + (h * (height + 1));
-				finalMesh[w + (h * (height + 1))] = { XMFLOAT3(
+				XMFLOAT3 pos = XMFLOAT3(
 					w - (_gridWidth / 2.0f),
 					_heightmap[index],
-					h - (_gridHeight / 2.0f)
-				), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2((w / (_gridWidth)), (h / (_gridHeight))) };
+					h - (_gridHeight / 2.0f));
+				finalMesh[w + (h * (height + 1))] = { pos, XMFLOAT3(
+					0.0f,
+					1.0f,
+					0.0f), XMFLOAT2((w / (_gridWidth)), (h / (_gridHeight))) };
 			}
+
+		int* count = new int[(width + 1) * (height + 1)];
+		Vector3* total = new Vector3[(width + 1) * (height + 1)];
+
+		for (int i = 0; i < (width + 1) * (height + 1); i++)
+		{
+			count[i] = 0;
+			total[i] = Vector3();
+		}
+
+		for (int i = 0; i < _indexCount; i += 3)
+		{
+			WORD p1i = finalIndexes[i];
+			WORD p2i = finalIndexes[i + 1];
+			WORD p3i = finalIndexes[i + 2];
+			Vector3 p1 = Vector3(finalMesh[p1i].Pos.x, finalMesh[p1i].Pos.y, finalMesh[p1i].Pos.z);
+			Vector3 p2 = Vector3(finalMesh[p2i].Pos.x, finalMesh[p2i].Pos.y, finalMesh[p2i].Pos.z);
+			Vector3 p3 = Vector3(finalMesh[p3i].Pos.x, finalMesh[p3i].Pos.y, finalMesh[p3i].Pos.z);
+			Vector3 A = Vector3(p2 - p1);
+			Vector3 B = Vector3(p3 - p1);
+			Vector3 norm = Vector3(
+				A.y * B.z - A.z * B.y,
+				A.z * B.x - A.x * B.z,
+				A.x * B.y - A.y * B.x);
+			total[p1i]+= norm;
+			total[p2i]+= norm;
+			total[p3i]+= norm;
+			count[p1i]++;
+			count[p2i]++;
+			count[p3i]++;
+		}
+
+		for (int i = 0; i < (width + 1) * (height + 1); i++)
+		{
+			finalMesh[i].Normal = XMFLOAT3(total[i].x / count[i], total[i].y / count[i], total[i].z / count[i]);
+			//finalMesh[i].Normal;
+		}
+
+		delete[] count;
+		delete[] total;
 
 		D3D11_BUFFER_DESC bd;
 		ZeroMemory(&bd, sizeof(bd));
@@ -55,47 +141,6 @@ HRESULT Terrain::GenerateGrid(int width, int height, ID3D11Device* pd3dDevice)
 			return hr;
 	}
 
-	// Index Buffer
-	{
-		_indexCount = width * height * 2 * 3; // width * height squares, * 2 for each triangle, * 3 for each vertex
-		WORD* finalMesh = new WORD[_indexCount];
-		for (int i = 0; i < _indexCount; i++)
-			finalMesh[i] = 0;
-		int i = 0;
-		for (int h = 0; h < height; h++)
-			for (int w = 0; w < width; w++)
-			{
-				finalMesh[i] = w + (h * (height + 1)); // Current Vertex
-				i++;
-				finalMesh[i] = w + ((h + 1) * (height + 1)); // Vertex above
-				i++;
-				finalMesh[i] = w + 1 + (h * (height + 1)); // Vertex to the right
-				i++;
-
-				finalMesh[i] = w + ((h + 1) * (height + 1)); // Vertex above
-				i++;
-				finalMesh[i] = w + 1 + ((h + 1) * (height + 1)); // Vertex diagonal
-				i++;
-				finalMesh[i] = w + 1 + (h * (height + 1)); // Vertex to the right
-				i++;
-			}
-
-		D3D11_BUFFER_DESC bd;
-		ZeroMemory(&bd, sizeof(bd));
-
-		bd.Usage = D3D11_USAGE_DEFAULT;
-		bd.ByteWidth = sizeof(WORD) * _indexCount;
-		bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		bd.CPUAccessFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA InitData;
-		ZeroMemory(&InitData, sizeof(InitData));
-		InitData.pSysMem = finalMesh;
-		hr = pd3dDevice->CreateBuffer(&bd, &InitData, &_pGridIndexBuffer);
-
-		if (FAILED(hr))
-			return hr;
-	}
 
 	return S_OK;
 }
