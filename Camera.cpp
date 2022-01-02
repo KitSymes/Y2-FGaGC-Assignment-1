@@ -21,8 +21,10 @@ Camera::Camera(Vector3 pos, Vector3 at, Vector3 up, FLOAT windowWidth, FLOAT win
 	_nearPlane = nearPlane;
 	_farPlane = farPlane;
 	_lookTo = lookTo;
-	_direction = Vector3(1.0f, 0.0f, 0.0f);
+	//_direction = Vector3(1.0f, 0.0f, 0.0f);
+	_direction = at;
 	_rotationYaw = 0.0f;
+	_rotationPitch = 0.0f;
 }
 
 Camera::~Camera()
@@ -35,15 +37,18 @@ void Camera::Update()
 	if (_lookTo)
 	{
 		if (GetAsyncKeyState('Q'))
-		{
 			SetYaw(_rotationYaw + 0.001f);
-		}
 		if (GetAsyncKeyState('E'))
-		{
 			SetYaw(_rotationYaw - 0.001f);
-		}
+
+		if (GetAsyncKeyState('R'))
+			SetPitch(_rotationPitch + 0.001f);
+		if (GetAsyncKeyState('F'))
+			SetPitch(_rotationPitch - 0.001f);
+
 		//DBOUT("" << _direction.x << " " << _direction.z << std::endl);
 
+		// Movement
 		if (GetAsyncKeyState('W'))
 			_eye += _direction * 0.001f;
 		if (GetAsyncKeyState('S'))
@@ -52,6 +57,7 @@ void Camera::Update()
 			_eye += _direction.CrossProduct(_up) * 0.001f;
 		if (GetAsyncKeyState('D'))
 			_eye -= _direction.CrossProduct(_up) * 0.001f;
+
 		if (GetAsyncKeyState(VK_SPACE))
 			_eye.y += 0.001;
 		if (GetAsyncKeyState(VK_LCONTROL))
@@ -68,16 +74,6 @@ void Camera::SetPosition(Vector3 pos)
 Vector3 Camera::GetPosition()
 {
 	return _eye;
-}
-
-void Camera::SetLookAt(Vector3 at)
-{
-	_at = at;
-}
-
-Vector3 Camera::GetLookAt()
-{
-	return _at;
 }
 
 void Camera::SetUp(Vector3 up)
@@ -98,15 +94,14 @@ XMFLOAT4X4* Camera::GetView()
 void Camera::SetView()
 {
 	XMVECTOR Eye = XMVectorSet(_eye.x, _eye.y, _eye.z, 0.0f);
-	XMVECTOR At = XMVectorSet(_at.x, _at.y, _at.z, 0.0f);
 	XMVECTOR Up = XMVectorSet(_up.x, _up.y, _up.z, 0.0f);
+		XMVECTOR Direction = XMVectorSet(_direction.x, _direction.y, _direction.z, 0.0f);
 	if (_lookTo)
 	{
-		XMVECTOR Direction = XMVectorSet(_direction.x, _direction.y, _direction.z, 0.0f);
 		XMStoreFloat4x4(&_view, XMMatrixLookToLH(Eye, Direction, Up));
 	}
 	else
-		XMStoreFloat4x4(&_view, XMMatrixLookAtLH(Eye, At, Up));
+		XMStoreFloat4x4(&_view, XMMatrixLookAtLH(Eye, Direction, Up));
 }
 
 XMFLOAT4X4* Camera::GetProjection()
@@ -119,11 +114,26 @@ void Camera::SetProjection()
 	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _windowWidth / (FLOAT)_windowHeight, 0.01f, 100.0f));
 }
 
+void Camera::SetDirection(Vector3 dir)
+{
+	_direction = dir;
+}
+
 void Camera::SetYaw(float yaw)
 {
 	_rotationYaw = yaw;
 	_direction.x = 1 * cos(_rotationYaw) - 0 * sin(_rotationYaw);
 	_direction.z = 1 * sin(_rotationYaw) - 0 * cos(_rotationYaw);
+}
+
+void Camera::SetPitch(float pitch)
+{
+	if (pitch > M_PI)
+		pitch = M_PI;
+	else if (pitch < -M_PI)
+			pitch = -M_PI;
+	_rotationPitch = pitch;
+	_direction.y = _rotationPitch;
 }
 
 void Camera::Reshape(FLOAT windowWidth, FLOAT windowHeight, FLOAT nearPlane, FLOAT farPlane, bool lookTo)

@@ -126,8 +126,10 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	_camera2 = new Camera(Vector3(-50.0f, 15.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
 	_camera3 = new Camera(Vector3(0.0f, 15.0f, 50.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
 	//_camera4 = new Camera(Vector3(50.0f, 15.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
-	// H2 Top Down TODO set Pitch
-	_camera4 = new Camera(Vector3(0.0f, 100.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
+	// H2 Top Down
+	_camera4 = new Camera(Vector3(0.0f, 80.0f, -8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
+	_camera4->SetPitch(-M_PI);
+
 	_camera = _camera1;
 	_camera->SetView();
 	_camera->SetProjection();
@@ -152,6 +154,13 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	_moon2 = new OrbitGameObject(_planeGeo, 2, Vector3(1.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 1.0f), _planet1);
 	_moon2->_scale = Vector3(0.05f, 0.05f, 0.05f);
 	_moon2->_rotation = Vector3(90.0f, 90.0f, 0.0f);
+
+	// I1 + I2 Check out Player.cpp for how it actually works
+	_cameraFP = new Camera(Vector3(), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, true);
+	_cameraTP = new Camera(Vector3(), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, true);
+	_player = new Player(_planetGeo, Vector3(0.0f, 10.0f, 0.0f), _cameraFP, _cameraTP);
+
+	_playerEnabled = true;
 
 	return S_OK;
 }
@@ -698,11 +707,13 @@ void Application::Cleanup()
 	// W08
 	if (_transparency) _transparency->Release();
 
-	_camera = nullptr;
-	delete _camera1;
-	delete _camera2;
-	delete _camera3;
-	delete _camera4;
+	//
+	delete _cameraFP;
+	delete _cameraTP;
+	_cameraFP = nullptr;
+	_cameraTP = nullptr;
+	delete _player;
+	_player = nullptr;
 
 	//if (_sun)
 	//	delete _sun;
@@ -737,10 +748,6 @@ void Application::Update()
 
 		t = (dwTimeCur - dwTimeStart) / 1000.0f;
 	}
-
-	//
-	// Animate the cubes
-	//
 
 	// Sun
 	XMStoreFloat4x4(&_world, XMMatrixRotationY(t / 4));
@@ -778,18 +785,37 @@ void Application::Update()
 	_moon2->Update(t);
 
 	if (GetAsyncKeyState('1'))
+	{
 		_camera = _camera1;
+		_playerEnabled = false;
+	}
 	else if (GetAsyncKeyState('2'))
+	{
 		_camera = _camera2;
+		_playerEnabled = false;
+	}
 	else if (GetAsyncKeyState('3'))
+	{
 		_camera = _camera3;
+		_playerEnabled = false;
+	}
 	else if (GetAsyncKeyState('4'))
+	{
 		_camera = _camera4;
+		_playerEnabled = false;
+	}
+	else if (GetAsyncKeyState('5'))
+		_playerEnabled = true;
 
-	_camera->SetView();
-	_camera->SetProjection();
-	_camera->Update();
 
+	if (_playerEnabled)
+		_player->Update(t);
+	else
+	{
+		_camera->SetView();
+		_camera->SetProjection();
+		_camera->Update();
+	}
 
 	_showWireFrame = GetAsyncKeyState(VK_LSHIFT);
 }
@@ -804,8 +830,8 @@ void Application::Draw()
 	_pImmediateContext->ClearRenderTargetView(_pRenderTargetView, ClearColor);
 
 	XMMATRIX world = XMLoadFloat4x4(&_world);
-	XMMATRIX view = XMLoadFloat4x4(_camera->GetView());
-	XMMATRIX projection = XMLoadFloat4x4(_camera->GetProjection());
+	XMMATRIX view = XMLoadFloat4x4(_playerEnabled ? _player->GetCameraView() : _camera->GetView());
+	XMMATRIX projection = XMLoadFloat4x4(_playerEnabled ? _player->GetCameraProjection() : _camera->GetProjection());
 
 	//
 	// Update variables
@@ -849,6 +875,8 @@ void Application::Draw()
 
 	// Render Opaque Objects //
 
+	_player->Draw(_pImmediateContext, &cb, _pConstantBuffer);
+
 	_sun->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 	_planet1->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 
@@ -864,12 +892,12 @@ void Application::Draw()
 
 	_moon1->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 	_moon2->Draw(_pImmediateContext, &cb, _pConstantBuffer);
-	
+
 	_pImmediateContext->PSSetShaderResources(0, 1, &_crateTexture);
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);
 	_pImmediateContext->IASetIndexBuffer(_pPyramidIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	_terrain->Draw(_pImmediateContext, &cb, _pConstantBuffer);
-	
+
 	// Set the blend state for transparent objects
 	_pImmediateContext->OMSetBlendState(_transparency, blendFactor, 0xffffffff);
 

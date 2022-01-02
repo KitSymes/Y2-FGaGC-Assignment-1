@@ -14,6 +14,7 @@
 #include "OrbitGameObject.h"
 #include "Camera.h"
 #include "Terrain.h"
+#include "Player.h"
 
 using namespace DirectX;
 
@@ -84,6 +85,11 @@ private:
 	ID3D11BlendState* _transparency;
 	// W10 Terrain
 	Terrain* _terrain;
+	//
+	Player* _player;
+	Camera* _cameraFP;
+	Camera* _cameraTP;
+	bool _playerEnabled;
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 	HRESULT InitDevice();
