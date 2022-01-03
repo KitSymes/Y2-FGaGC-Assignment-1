@@ -992,7 +992,7 @@ void Application::Draw()
 	_pImmediateContext->OMSetBlendState(_transparency, blendFactor, 0xffffffff);
 
 	// Render Transparent Objects //
-
+	// EF3 Transparency
 
 	// Set to Pyramid
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);

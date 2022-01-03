@@ -13,6 +13,7 @@ Terrain::~Terrain()
 	_pGridIndexBuffer = nullptr;
 }
 
+
 HRESULT Terrain::GenerateGrid(int width, int height, ID3D11Device* pd3dDevice)
 {
 	HRESULT hr;
