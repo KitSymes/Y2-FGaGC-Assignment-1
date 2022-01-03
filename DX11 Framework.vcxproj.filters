@@ -23,6 +23,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Terrain.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="json.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />

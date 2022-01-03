@@ -15,8 +15,10 @@
 #include "Camera.h"
 #include "Terrain.h"
 #include "Player.h"
+#include "json.hpp"
 
 using namespace DirectX;
+using json = nlohmann::json;
 
 class Application
 {

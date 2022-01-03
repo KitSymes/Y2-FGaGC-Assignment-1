@@ -119,6 +119,10 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	// Initialize the projection matrix
 	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _WindowWidth / (FLOAT)_WindowHeight, 0.01f, 100.0f));*/
 
+	std::ifstream ifs("config.json");
+	json config = json::parse(ifs);
+	ifs.close();
+
 	// I2 First Person Camera linked to TODO
 	_camera1 = new Camera(Vector3(0.0f, 10.0f, -8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, true);
 	_camera1->SetYaw(1.57079633f);
@@ -144,21 +148,23 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	_sunGeo = new Geometry(&_sphereMeshData, _crateTexture);
 	_sun = new GameObject(_sunGeo, Vector3(), nullptr);
 
+	// G2
 	_planetGeo = new Geometry(&_cubeMeshData, _crateTexture);
-	_planet1 = new OrbitGameObject(_planetGeo, (float)2 / 3, Vector3(4.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), _sun);
+	_planet1 = new OrbitGameObject(_planetGeo, config["planet1"]["speed"], Vector3(config["planet1"]["offset"], 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), _sun);
 	_planet1->_scale = Vector3(0.5f, 0.5f, 0.5f);
 
 	_planeGeo = new Geometry(&_planeMeshData, _planeTexture);
-	_moon1 = new OrbitGameObject(_planeGeo, 2, Vector3(0.0f, 1.0f, 0.0f), Vector3(-1.0f, 0.0f, 0.0f), _planet1);
+	_moon1 = new OrbitGameObject(_planeGeo, config["moon1"]["speed"], Vector3(0.0f, config["moon1"]["offset"], 0.0f), Vector3(-1.0f, 0.0f, 0.0f), _planet1);
 	_moon1->_scale = Vector3(0.05f, 0.05f, 0.05f);
-	_moon2 = new OrbitGameObject(_planeGeo, 2, Vector3(1.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 1.0f), _planet1);
+	_moon2 = new OrbitGameObject(_planeGeo, config["moon2"]["speed"], Vector3(config["moon2"]["offset"], 0.0f, 0.0f), Vector3(0.0f, 0.0f, 1.0f), _planet1);
 	_moon2->_scale = Vector3(0.05f, 0.05f, 0.05f);
 	_moon2->_rotation = Vector3(90.0f, 90.0f, 0.0f);
 
 	// I1 + I2 Check out Player.cpp for how it actually works
+	// G2
 	_cameraFP = new Camera(Vector3(), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, true);
 	_cameraTP = new Camera(Vector3(), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, true);
-	_player = new Player(_planetGeo, Vector3(0.0f, 10.0f, 0.0f), _cameraFP, _cameraTP);
+	_player = new Player(_planetGeo, Vector3(config["player"]["x"], config["player"]["y"], config["player"]["z"]), _cameraFP, _cameraTP);
 
 	_playerEnabled = true;
 

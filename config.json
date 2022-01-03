@@ -1,0 +1,19 @@
+{
+   "player": {
+      "x":0.0,
+      "y":10.0,
+      "z":-8.0
+   },
+   "planet1": {
+	   "speed":0.6666,
+	   "offset":1.0
+   },
+   "moon1": {
+	   "speed":2.0,
+	   "offset":1.0
+   },
+   "moon2": {
+	   "speed":4.0,
+	   "offset":1.0
+   }
+}

@@ -402,6 +402,7 @@
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Geometry.h" />
+    <ClInclude Include="json.hpp" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="OBJLoader.h" />
     <ClInclude Include="OrbitGameObject.h" />
