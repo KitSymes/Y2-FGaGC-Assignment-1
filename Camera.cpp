@@ -95,7 +95,7 @@ void Camera::SetView()
 {
 	XMVECTOR Eye = XMVectorSet(_eye.x, _eye.y, _eye.z, 0.0f);
 	XMVECTOR Up = XMVectorSet(_up.x, _up.y, _up.z, 0.0f);
-		XMVECTOR Direction = XMVectorSet(_direction.x, _direction.y, _direction.z, 0.0f);
+	XMVECTOR Direction = XMVectorSet(_direction.x, _direction.y, _direction.z, 0.0f);
 	if (_lookTo)
 	{
 		XMStoreFloat4x4(&_view, XMMatrixLookToLH(Eye, Direction, Up));
@@ -111,7 +111,7 @@ XMFLOAT4X4* Camera::GetProjection()
 
 void Camera::SetProjection()
 {
-	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _windowWidth / (FLOAT)_windowHeight, 0.01f, 100.0f));
+	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH(XM_PIDIV2, _windowWidth / (FLOAT)_windowHeight, _nearPlane, _farPlane));
 }
 
 void Camera::SetDirection(Vector3 dir)
@@ -131,7 +131,7 @@ void Camera::SetPitch(float pitch)
 	if (pitch > M_PI)
 		pitch = M_PI;
 	else if (pitch < -M_PI)
-			pitch = -M_PI;
+		pitch = -M_PI;
 	_rotationPitch = pitch;
 	_direction.y = _rotationPitch;
 }

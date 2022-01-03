@@ -16,6 +16,7 @@
 #include "Terrain.h"
 #include "Player.h"
 #include "json.hpp"
+#include "Skybox.h"
 
 using namespace DirectX;
 using json = nlohmann::json;
@@ -36,13 +37,15 @@ private:
 	ID3D11InputLayout*      _pVertexLayout;
 	ID3D11Buffer*           _pConstantBuffer;
 	XMFLOAT4X4              _world;
+	ID3D11Buffer*			_pCubeVertexBuffer;
+	ID3D11Buffer*			_pCubeIndexBuffer;
 	// W02 Depth/Stencil Buffer
 	ID3D11DepthStencilView* _depthStencilView;
 	ID3D11Texture2D* _depthStencilBuffer;
 	// W02 Render States
 	bool					_showWireFrame = false;
 	ID3D11RasterizerState* _wireFrame;
-	ID3D11RasterizerState* _solidFrame;
+	ID3D11RasterizerState* _solidState;
 	// W02 Planet Positions
 	XMFLOAT4X4 _planet2World;
 	XMFLOAT4X4 _moon2World;
@@ -85,13 +88,23 @@ private:
 	Camera* _camera4;
 	// W08 Transparency
 	ID3D11BlendState* _transparency;
+	XMFLOAT4X4 _pineWorld;
+	ID3D11ShaderResourceView* _pineTexture = nullptr;
 	// W10 Terrain
 	Terrain* _terrain;
-	//
+	// W12
 	Player* _player;
 	Camera* _cameraFP;
 	Camera* _cameraTP;
 	bool _playerEnabled;
+	Skybox* _skybox;
+	ID3D11ShaderResourceView* _skyboxPX = nullptr;
+	ID3D11ShaderResourceView* _skyboxNX = nullptr;
+	ID3D11ShaderResourceView* _skyboxPY = nullptr;
+	ID3D11ShaderResourceView* _skyboxNY = nullptr;
+	ID3D11ShaderResourceView* _skyboxPZ = nullptr;
+	ID3D11ShaderResourceView* _skyboxNZ = nullptr;
+	ID3D11RasterizerState* _doubleSidedState;
 private:
 	HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow);
 	HRESULT InitDevice();

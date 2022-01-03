@@ -27,18 +27,18 @@ void Player::Update(float time)
 
 	// Movement
 	if (GetAsyncKeyState('W'))
-		_position += _forward * 0.001f;
+		_position += _forward * _speed;
 	if (GetAsyncKeyState('S'))
-		_position -= _forward * 0.001f;
+		_position -= _forward * _speed;
 	if (GetAsyncKeyState('A'))
-		_position += _forward.CrossProduct(_up) * 0.001f;
+		_position += _forward.CrossProduct(_up) * _speed;
 	if (GetAsyncKeyState('D'))
-		_position -= _forward.CrossProduct(_up) * 0.001f;
+		_position -= _forward.CrossProduct(_up) * _speed;
 
 	if (GetAsyncKeyState(VK_SPACE))
-		_position.y += 0.001;
+		_position.y += _speed;
 	if (GetAsyncKeyState(VK_LCONTROL))
-		_position.y -= 0.001;
+		_position.y -= _speed;
 
 	// Switching Perspectives
 	if (GetAsyncKeyState('Z'))

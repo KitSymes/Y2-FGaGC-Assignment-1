@@ -7,11 +7,11 @@
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
-cbuffer ConstantBuffer : register( b0 )
+cbuffer ConstantBuffer : register(b0)
 {
-	matrix World;
-	matrix View;
-	matrix Projection;
+    matrix World;
+    matrix View;
+    matrix Projection;
     float4 DiffuseMtrl;
     float4 DiffuseLight;
     float3 LightVecW;
@@ -73,7 +73,7 @@ VS_OUTPUT VS(float4 Pos : POSITION, float3 NormalL : NORMAL, float2 Tex : TEXCOO
 // Pixel Shader
 // D2 Per Pixel + D3 Ambient, Diffuse and Ambient
 //--------------------------------------------------------------------------------------
-float4 PS( VS_OUTPUT input ) : SV_Target
+float4 PS(VS_OUTPUT input) : SV_Target
 {
     float4 f = float4(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -94,7 +94,13 @@ float4 PS( VS_OUTPUT input ) : SV_Target
     float4 textureColour = txDiffuse.Sample(samLinear, input.Tex);
     
     // Calculate Lighting
-    f.rgb = textureColour.rgb * (diffuse + ambient + specular);
+    if (SpecularPower == 0)
+        f.rgb = textureColour.rgb * (ambient);
+    else
+        f.rgb = textureColour.rgb * (diffuse + ambient + specular);
     f.a = textureColour.a;
+    
+    clip(f.a - 0.25f);
+    
     return f;
 }

@@ -37,8 +37,8 @@ Application::Application()
 	_pVertexShader = nullptr;
 	_pPixelShader = nullptr;
 	_pVertexLayout = nullptr;
-	/*_pVertexBuffer = nullptr;
-	_pIndexBuffer = nullptr;*/
+	_pCubeVertexBuffer = nullptr;
+	_pCubeIndexBuffer = nullptr;
 	_pPyramidVertexBuffer = nullptr;
 	_pPyramidIndexBuffer = nullptr;
 	_pConstantBuffer = nullptr;
@@ -124,14 +124,14 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 	ifs.close();
 
 	// I2 First Person Camera linked to TODO
-	_camera1 = new Camera(Vector3(0.0f, 10.0f, -8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, true);
+	_camera1 = new Camera(Vector3(0.0f, 10.0f, -8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.01f, 500.0f, true);
 	_camera1->SetYaw(1.57079633f);
 	// H1 Static cameras
-	_camera2 = new Camera(Vector3(-50.0f, 15.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
-	_camera3 = new Camera(Vector3(0.0f, 15.0f, 50.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
+	_camera2 = new Camera(Vector3(-50.0f, 15.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.01f, 500.0f, false);
+	_camera3 = new Camera(Vector3(0.0f, 15.0f, 50.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.01f, 500.0f, false);
 	//_camera4 = new Camera(Vector3(50.0f, 15.0f, 0.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
 	// H2 Top Down
-	_camera4 = new Camera(Vector3(0.0f, 80.0f, -8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, false);
+	_camera4 = new Camera(Vector3(0.0f, 80.0f, -8.0f), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.01f, 500.0f, false);
 	_camera4->SetPitch(-M_PI);
 
 	_camera = _camera1;
@@ -162,11 +162,14 @@ HRESULT Application::Initialise(HINSTANCE hInstance, int nCmdShow)
 
 	// I1 + I2 Check out Player.cpp for how it actually works
 	// G2
-	_cameraFP = new Camera(Vector3(), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, true);
-	_cameraTP = new Camera(Vector3(), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.0f, 500.0f, true);
+	_cameraFP = new Camera(Vector3(), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.01f, 500.0f, true);
+	_cameraTP = new Camera(Vector3(), Vector3(), Vector3(0.0f, 1.0f, 0.0f), _WindowWidth, _WindowHeight, 0.01f, 500.0f, true);
 	_player = new Player(_planetGeo, Vector3(config["player"]["x"], config["player"]["y"], config["player"]["z"]), _cameraFP, _cameraTP);
 
 	_playerEnabled = true;
+
+	// EF2 Skybox
+	_skybox = new Skybox(&_cubeMeshData, _skyboxPX, _skyboxNX, _skyboxPY, _skyboxNY, _skyboxPZ, _skyboxNZ);
 
 	return S_OK;
 }
@@ -242,7 +245,7 @@ HRESULT Application::InitVertexBuffer()
 {
 	HRESULT hr;
 
-	/*{
+	{
 		// Create vertex buffer
 		SimpleVertex vertices[] =
 		{
@@ -268,11 +271,11 @@ HRESULT Application::InitVertexBuffer()
 		ZeroMemory(&InitData, sizeof(InitData));
 		InitData.pSysMem = vertices;
 
-		hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pVertexBuffer);
+		hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pCubeVertexBuffer);
 
 		if (FAILED(hr))
 			return hr;
-	}*/
+	}
 
 	{
 		// Create pyramid vertex buffer
@@ -310,7 +313,7 @@ HRESULT Application::InitIndexBuffer()
 {
 	HRESULT hr;
 
-	/*{
+	{
 		// Create index buffer
 		WORD indices[] =
 		{
@@ -345,11 +348,11 @@ HRESULT Application::InitIndexBuffer()
 		D3D11_SUBRESOURCE_DATA InitData;
 		ZeroMemory(&InitData, sizeof(InitData));
 		InitData.pSysMem = indices;
-		hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pIndexBuffer);
+		hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &_pCubeIndexBuffer);
 
 		if (FAILED(hr))
 			return hr;
-	}*/
+	}
 
 	{
 		// Create Pyramid index buffer
@@ -600,7 +603,15 @@ HRESULT Application::InitDevice()
 	ZeroMemory(&wfdesc, sizeof(D3D11_RASTERIZER_DESC));
 	wfdesc.FillMode = D3D11_FILL_SOLID;
 	wfdesc.CullMode = D3D11_CULL_BACK;
-	hr = _pd3dDevice->CreateRasterizerState(&wfdesc, &_solidFrame);
+	hr = _pd3dDevice->CreateRasterizerState(&wfdesc, &_solidState);
+
+	if (FAILED(hr))
+		return hr;
+
+	ZeroMemory(&wfdesc, sizeof(D3D11_RASTERIZER_DESC));
+	wfdesc.FillMode = D3D11_FILL_SOLID;
+	wfdesc.CullMode = D3D11_CULL_NONE;
+	hr = _pd3dDevice->CreateRasterizerState(&wfdesc, &_doubleSidedState);
 
 	if (FAILED(hr))
 		return hr;
@@ -614,7 +625,33 @@ HRESULT Application::InitDevice()
 
 
 	hr = CreateDDSTextureFromFile(_pd3dDevice, L"Plane_COLOR.dds", nullptr, &_planeTexture);
+	if (FAILED(hr))
+		return hr;
 
+	hr = CreateDDSTextureFromFile(_pd3dDevice, L"Pine Tree.dds", nullptr, &_pineTexture);
+	if (FAILED(hr))
+		return hr;
+
+	// Skybox
+
+	hr = CreateDDSTextureFromFile(_pd3dDevice, L"skybox/posx.dds", nullptr, &_skyboxPX);
+	if (FAILED(hr))
+		return hr;
+	hr = CreateDDSTextureFromFile(_pd3dDevice, L"skybox/negx.dds", nullptr, &_skyboxNX);
+	if (FAILED(hr))
+		return hr;
+
+	hr = CreateDDSTextureFromFile(_pd3dDevice, L"skybox/posy.dds", nullptr, &_skyboxPY);
+	if (FAILED(hr))
+		return hr;
+	hr = CreateDDSTextureFromFile(_pd3dDevice, L"skybox/negy.dds", nullptr, &_skyboxNY);
+	if (FAILED(hr))
+		return hr;
+
+	hr = CreateDDSTextureFromFile(_pd3dDevice, L"skybox/posz.dds", nullptr, &_skyboxPZ);
+	if (FAILED(hr))
+		return hr;
+	hr = CreateDDSTextureFromFile(_pd3dDevice, L"skybox/negz.dds", nullptr, &_skyboxNZ);
 	if (FAILED(hr))
 		return hr;
 
@@ -665,14 +702,14 @@ void Application::Cleanup()
 {
 	if (_pImmediateContext) _pImmediateContext->ClearState();
 
-	if (_solidFrame) _solidFrame->Release();
+	if (_solidState) _solidState->Release();
 	if (_wireFrame) _wireFrame->Release();
 	if (_depthStencilView) _depthStencilView->Release();
 
 	if (_depthStencilBuffer) _depthStencilBuffer->Release();
 	if (_pConstantBuffer) _pConstantBuffer->Release();
-	//if (_pVertexBuffer) _pVertexBuffer->Release();
-	//if (_pIndexBuffer) _pIndexBuffer->Release();
+	if (_pCubeVertexBuffer) _pCubeVertexBuffer->Release();
+	if (_pCubeIndexBuffer) _pCubeIndexBuffer->Release();
 	if (_pPyramidVertexBuffer) _pPyramidVertexBuffer->Release();
 	if (_pPyramidIndexBuffer) _pPyramidIndexBuffer->Release();
 	delete _terrain;
@@ -712,14 +749,33 @@ void Application::Cleanup()
 	_camera4 = nullptr;
 	// W08
 	if (_transparency) _transparency->Release();
+	if (_pineTexture) _pineTexture->Release();
 
-	//
+	// W12
 	delete _cameraFP;
 	delete _cameraTP;
 	_cameraFP = nullptr;
 	_cameraTP = nullptr;
 	delete _player;
 	_player = nullptr;
+
+	delete _skybox;
+	_skybox = nullptr;
+	if (_skyboxPX) _skyboxPX->Release();
+	if (_skyboxNX) _skyboxNX->Release();
+	if (_skyboxPY) _skyboxPY->Release();
+	if (_skyboxNY) _skyboxNY->Release();
+	if (_skyboxPZ) _skyboxPZ->Release();
+	if (_skyboxNZ) _skyboxNZ->Release();
+	_skyboxPX = nullptr;
+	_skyboxNX = nullptr;
+	_skyboxPY = nullptr;
+	_skyboxNY = nullptr;
+	_skyboxPZ = nullptr;
+	_skyboxNZ = nullptr;
+
+	if (_doubleSidedState) _doubleSidedState->Release();
+	_doubleSidedState = nullptr;
 
 	//if (_sun)
 	//	delete _sun;
@@ -783,6 +839,9 @@ void Application::Update()
 			XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixTranslation(7, 0, 0) * XMMatrixRotationY(t / 2.5f)); // Planet 2 Transformations
 	}
 
+	// Pine Tree
+	XMStoreFloat4x4(&_pineWorld, XMMatrixTranslation(10.0f, 10.0f, 10.0f));
+
 	_terrain->Update();
 
 	_sun->Update(t);
@@ -824,6 +883,7 @@ void Application::Update()
 	}
 
 	_showWireFrame = GetAsyncKeyState(VK_LSHIFT);
+	_skybox->Update(_player->_position);
 }
 
 // C1 + C2 (Basic plane became the Terrain class, that loads in with a heightmap. That should cover it, otherwise replace minimap.dds with a pure black 100x100 1 channel .raw file)
@@ -846,22 +906,9 @@ void Application::Draw()
 	cb.mWorld = XMMatrixTranspose(world);
 	cb.mView = XMMatrixTranspose(view);
 	cb.mProjection = XMMatrixTranspose(projection);
-	cb.DiffuseMtrl = diffuseMaterial;
-	cb.DiffuseLight = diffuseLight;
-	cb.LightVecW = lightDirection;
-	cb.AmbientMtrl = ambientMaterial;
-	cb.AmbientLight = ambientLight;
-	cb.SpecularMtrl = specularMaterial;
-	cb.SpecularLight = specularLight;
-	cb.SpecularPower = specularPower;
 	cb.EyePosW = EyePosW;
 
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
-
-	if (_showWireFrame)
-		_pImmediateContext->RSSetState(_wireFrame); // C3 Wireframe
-	else
-		_pImmediateContext->RSSetState(_solidFrame);
 
 	int pyramidIndexCount = 3 * 6;
 
@@ -880,6 +927,34 @@ void Application::Draw()
 	_pImmediateContext->OMSetBlendState(0, 0, 0xffffffff);
 
 	// Render Opaque Objects //
+
+	// Skybox
+	cb.DiffuseMtrl = XMFLOAT4();
+	cb.DiffuseLight = XMFLOAT4();
+	cb.LightVecW = XMFLOAT3();
+	cb.AmbientMtrl = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	cb.AmbientLight = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	cb.SpecularMtrl = XMFLOAT4();
+	cb.SpecularLight = XMFLOAT4();
+	cb.SpecularPower = 0.0f;
+	_pImmediateContext->RSSetState(_doubleSidedState);
+	_skybox->Draw(_pImmediateContext, &cb, _pConstantBuffer);
+
+	// Normal
+
+	cb.DiffuseMtrl = diffuseMaterial;
+	cb.DiffuseLight = diffuseLight;
+	cb.LightVecW = lightDirection;
+	cb.AmbientMtrl = ambientMaterial;
+	cb.AmbientLight = ambientLight;
+	cb.SpecularMtrl = specularMaterial;
+	cb.SpecularLight = specularLight;
+	cb.SpecularPower = specularPower;
+
+	if (_showWireFrame)
+		_pImmediateContext->RSSetState(_wireFrame); // C3 Wireframe
+	else
+		_pImmediateContext->RSSetState(_solidState);
 
 	_player->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 
@@ -900,14 +975,24 @@ void Application::Draw()
 	_moon2->Draw(_pImmediateContext, &cb, _pConstantBuffer);
 
 	_pImmediateContext->PSSetShaderResources(0, 1, &_crateTexture);
-	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);
-	_pImmediateContext->IASetIndexBuffer(_pPyramidIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	_terrain->Draw(_pImmediateContext, &cb, _pConstantBuffer);
+
+
+	// EF1 Billboarding
+	world = XMLoadFloat4x4(&_pineWorld);
+	cb.mWorld = XMMatrixTranspose(world);
+	_pImmediateContext->RSSetState(_doubleSidedState);
+	_pImmediateContext->IASetVertexBuffers(0, 1, &_pCubeVertexBuffer, &stride, &offset);
+	_pImmediateContext->IASetIndexBuffer(_pCubeIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	_pImmediateContext->PSSetShaderResources(0, 1, &_pineTexture);
+	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
+	_pImmediateContext->DrawIndexed(6, 0, 0);
 
 	// Set the blend state for transparent objects
 	_pImmediateContext->OMSetBlendState(_transparency, blendFactor, 0xffffffff);
 
 	// Render Transparent Objects //
+
 
 	// Set to Pyramid
 	_pImmediateContext->IASetVertexBuffers(0, 1, &_pPyramidVertexBuffer, &stride, &offset);

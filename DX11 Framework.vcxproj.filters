@@ -24,6 +24,7 @@
     <ClInclude Include="Terrain.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="json.hpp" />
+    <ClInclude Include="Skybox.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -38,6 +39,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Terrain.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Skybox.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">

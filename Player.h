@@ -16,6 +16,9 @@ private:
 	float _pitch;
 	float _yaw;
 
+	//float _speed = 0.001f;
+	float _speed = 0.01f;
+
 	bool _firstPerson;
 public:
     Player(Geometry* mesh, Vector3 position, Camera* cameraFP, Camera* cameraTP);
