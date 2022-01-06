@@ -565,7 +565,7 @@ HRESULT Application::InitDevice()
 
 	InitIndexBuffer();
 
-	_terrain = new Terrain();
+	_terrain = new Terrain(Vector3(0.0f, -20.0f, 0.0f));
 	_terrain->GenerateGrid(99, 99, _pd3dDevice);
 
 	/*// Set vertex buffer
@@ -842,7 +842,7 @@ void Application::Update()
 	// Pine Tree
 	XMStoreFloat4x4(&_pineWorld, XMMatrixTranslation(10.0f, 10.0f, 10.0f));
 
-	_terrain->Update();
+	_terrain->Update(t);
 
 	_sun->Update(t);
 	_planet1->Update(t);

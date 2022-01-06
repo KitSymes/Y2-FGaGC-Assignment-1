@@ -1,6 +1,6 @@
 #include "Terrain.h"
 
-Terrain::Terrain()
+Terrain::Terrain(Vector3 position) : GameObject(nullptr, position, nullptr)
 {
 	_heightScale = 10.0f;
 }
@@ -12,7 +12,6 @@ Terrain::~Terrain()
 	if (_pGridIndexBuffer) _pGridIndexBuffer->Release();
 	_pGridIndexBuffer = nullptr;
 }
-
 
 HRESULT Terrain::GenerateGrid(int width, int height, ID3D11Device* pd3dDevice)
 {
@@ -108,9 +107,9 @@ HRESULT Terrain::GenerateGrid(int width, int height, ID3D11Device* pd3dDevice)
 				A.y * B.z - A.z * B.y,
 				A.z * B.x - A.x * B.z,
 				A.x * B.y - A.y * B.x);
-			total[p1i]+= norm;
-			total[p2i]+= norm;
-			total[p3i]+= norm;
+			total[p1i] += norm;
+			total[p2i] += norm;
+			total[p3i] += norm;
 			count[p1i]++;
 			count[p2i]++;
 			count[p3i]++;
@@ -173,11 +172,6 @@ void Terrain::LoadHeightmap()
 		_heightmap[i] = (in[i] / 255.0f) * _heightScale;
 }
 
-void Terrain::Update()
-{
-	XMStoreFloat4x4(&_gridWorld, XMMatrixTranslation(0.0f, -2.0f, 0.0f));
-}
-
 void Terrain::Draw(ID3D11DeviceContext* _pImmediateContext, ConstantBuffer* cb, ID3D11Buffer* _pConstantBuffer)
 {
 	UINT stride = sizeof(SimpleVertex);
@@ -188,14 +182,8 @@ void Terrain::Draw(ID3D11DeviceContext* _pImmediateContext, ConstantBuffer* cb, 
 	_pImmediateContext->IASetIndexBuffer(_pGridIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
 	// Draw Grid
-	XMMATRIX world = XMLoadFloat4x4(&_gridWorld);
-	//for (int w = 0; w < _gridWidth; w++)
-		//for (int h = 0; h < _gridHeight; h++)
-	{
-		//cb->mWorld = XMMatrixTranspose(world * XMMatrixTranslation((w - (_gridWidth / 2)) * 2, 0.0f, (h - (_gridHeight / 2)) * 2));
-		cb->mWorld = XMMatrixTranspose(world);
-		_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, cb, 0, 0);
-		_pImmediateContext->DrawIndexed(_indexCount, 0, 0);
-		//_pImmediateContext->DrawIndexed(3, 3, 0);
-	}
+	XMMATRIX world = XMLoadFloat4x4(&_world);
+	cb->mWorld = XMMatrixTranspose(world);
+	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, cb, 0, 0);
+	_pImmediateContext->DrawIndexed(_indexCount, 0, 0);
 }

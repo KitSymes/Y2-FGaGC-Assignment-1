@@ -25,14 +25,12 @@ void GameObject::Update(float time)
 
 void GameObject::Draw(ID3D11DeviceContext* _pImmediateContext, ConstantBuffer* cb, ID3D11Buffer* _pConstantBuffer)
 {
-	if (_mesh == nullptr)
-		return;
-
 	XMMATRIX world = XMLoadFloat4x4(&_world);
 	cb->mWorld = XMMatrixTranspose(world);
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, cb, 0, 0);
 
-	_mesh->Draw(_pImmediateContext, _pConstantBuffer);
+	if (_mesh != nullptr)
+		_mesh->Draw(_pImmediateContext, _pConstantBuffer);
 }
 
 Vector3 GameObject::GetOffset()
